@@ -10,14 +10,26 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # State management
+  provider: ^6.1.1
+
+  # Navigation
+  go_router: ^13.0.1
+
   # Network
   http: ^1.1.0
 
   # Local storage
   shared_preferences: ^2.2.2
 
-  # State management (TODO: choose provider/riverpod/bloc)
-  provider: ^6.1.1
+  # UUID generation for offline-first entities
+  uuid: ^4.2.2
+
+  # Connectivity detection
+  connectivity_plus: ^5.0.2
+
+  # Date formatting
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
