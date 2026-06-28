@@ -1,4 +1,4 @@
-const AppError = require('../errors/AppError');
+const ApiError = require('../errors/ApiError');
 
 function validate(schema) {
   return (req, res, next) => {
@@ -10,7 +10,7 @@ function validate(schema) {
         message: d.message,
       }));
 
-      const validationError = new AppError('Error de validación', 422, 'VALIDATION_ERROR');
+      const validationError = new ApiError('Error de validación', 422, 'VALIDATION_ERROR');
       validationError.details = details;
       return next(validationError);
     }

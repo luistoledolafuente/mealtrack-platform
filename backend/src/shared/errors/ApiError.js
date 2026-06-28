@@ -1,6 +1,7 @@
-class AppError extends Error {
-  constructor(message, statusCode, errorCode = 'INTERNAL_ERROR') {
+class ApiError extends Error {
+  constructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR') {
     super(message);
+    this.name = 'ApiError';
     this.statusCode = statusCode;
     this.errorCode = errorCode;
     this.isOperational = true;
@@ -8,4 +9,4 @@ class AppError extends Error {
   }
 }
 
-module.exports = AppError;
+module.exports = ApiError;

@@ -1,21 +1,26 @@
-const config = require('../../config');
+const logger = require('../logger/logger');
 
 function errorHandler(err, req, res, _next) {
   const statusCode = err.statusCode || 500;
   const message = err.isOperational ? err.message : 'Error interno del servidor';
 
   if (!err.isOperational) {
-    console.error('Unexpected error:', err);
+    logger.error('Unexpected error:', err);
   }
 
-  res.status(statusCode).json({
+  const body = {
     success: false,
     message,
     error: {
       code: err.errorCode || 'INTERNAL_ERROR',
-      ...(err.details && { details: err.details }),
     },
-  });
+  };
+
+  if (err.details) {
+    body.error.details = err.details;
+  }
+
+  res.status(statusCode).json(body);
 }
 
 module.exports = errorHandler;
