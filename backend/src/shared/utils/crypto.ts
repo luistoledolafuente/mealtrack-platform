@@ -12,5 +12,5 @@ export function comparePassword(password: string, hash: string): Promise<boolean
 }
 
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, env.jwt.secret, { expiresIn: env.jwt.expiresIn });
+  return jwt.sign(payload, env.jwt.secret, { expiresIn: env.jwt.expiresIn } as jwt.SignOptions);
 }

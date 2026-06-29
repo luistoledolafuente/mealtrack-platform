@@ -1,1 +1,1 @@
-﻿export { default as meal-plansRoutes } from './meal-plans.routes.js';
+﻿export { default as mealPlansRoutes } from './meal-plans.routes.js';

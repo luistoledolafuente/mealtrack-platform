@@ -1,1 +1,1 @@
-﻿export { default as daily-mealsRoutes } from './daily-meals.routes.js';
+﻿export { default as dailyMealsRoutes } from './daily-meals.routes.js';
