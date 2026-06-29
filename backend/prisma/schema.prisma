@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  fullName       String
+  email          String   @unique
+  passwordHash   String
+  role           String   // student | admin | superadmin
+  isActive       Boolean  @default(true)
+  restaurantId   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  restaurant    Restaurant?        @relation(fields: [restaurantId], references: [id])
+  subscriptions Subscription[]
+  dailyMeals    DailyMeal[]
+  payments      Payment[]
+  adjustments   AdjustmentRequest[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model Restaurant {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  isActive  Boolean  @default(true)
+  config    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  mealPlans     MealPlan[]
+  subscriptions Subscription[]
+  payments      Payment[]
+
+  @@map("restaurants")
+}
+
+model MealPlan {
+  id             String   @id @default(uuid())
+  restaurantId   String
+  name           String
+  price          Decimal  @db.Decimal(10, 2)
+  durationDays   Int
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id])
+  subscriptions Subscription[]
+
+  @@map("meal_plans")
+}
+
+model Subscription {
+  id              String   @id @default(uuid())
+  studentId       String
+  mealPlanId      String
+  restaurantId    String
+  startDate       DateTime
+  contractedDays  Int
+  remainingDays   Int       @default(0)
+  status          String    @default("active")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  student    User         @relation(fields: [studentId], references: [id])
+  mealPlan   MealPlan     @relation(fields: [mealPlanId], references: [id])
+  restaurant Restaurant   @relation(fields: [restaurantId], references: [id])
+  dailyMeals DailyMeal[]
+  payments   Payment[]
+
+  @@map("subscriptions")
+}
+
+model DailyMeal {
+  id               String   @id @default(uuid())
+  subscriptionId   String
+  studentId        String
+  date             DateTime @db.Date
+  status           String   // consumed | not_consumed | justified | pending | adjusted
+  registeredBy     String
+  validationMethod String?
+  syncStatus       String   @default("synced")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  subscription Subscription          @relation(fields: [subscriptionId], references: [id])
+  student      User                  @relation(fields: [studentId], references: [id])
+  adjustments  AdjustmentRequest[]
+
+  @@unique([subscriptionId, studentId, date])
+  @@map("daily_meals")
+}
+
+model AdjustmentRequest {
+  id          String   @id @default(uuid())
+  dailyMealId String
+  requesterId String
+  reason      String
+  status      String   @default("pending") // pending | approved | rejected
+  reviewerId  String?
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dailyMeal DailyMeal @relation(fields: [dailyMealId], references: [id])
+  requester User      @relation(fields: [requesterId], references: [id])
+  reviewer  User?     @relation(fields: [reviewerId], references: [id])
+
+  @@map("adjustment_requests")
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  subscriptionId  String
+  studentId       String
+  restaurantId    String
+  amount          Decimal  @db.Decimal(10, 2)
+  paymentDate     DateTime @db.Date
+  paymentMethod   String
+  reference       String?
+  registeredBy    String
+  syncStatus      String   @default("synced")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+  student      User         @relation(fields: [studentId], references: [id])
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
+
+  @@map("payments")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // expiration | payment | adjustment | system
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  detail    Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
