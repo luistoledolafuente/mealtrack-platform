@@ -1,80 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'route_names.dart';
-
-// TODO: Import feature screens once implemented
-// import '../../features/auth/presentation/login_screen.dart';
-// import '../../features/student_dashboard/presentation/dashboard_screen.dart';
+import '../../shared/providers/auth_provider.dart';
+import '../../features/auth/presentation/login_screen.dart';
+import '../../features/student_dashboard/presentation/student_dashboard_screen.dart';
+import '../../features/admin_dashboard/presentation/admin_dashboard_screen.dart';
+import '../../features/meal_calendar/presentation/meal_calendar_screen.dart';
+import '../../features/subscriptions/presentation/subscriptions_screen.dart';
+import '../../features/payments/presentation/payments_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/adjustments/presentation/adjustments_screen.dart';
 
 class AppRouter {
   AppRouter._();
 
   static final GoRouter router = GoRouter(
     initialLocation: RouteNames.loginPath,
+    redirect: _redirectLogic,
     routes: [
       GoRoute(
         name: RouteNames.login,
         path: RouteNames.loginPath,
-        builder: (context, state) => const _PlaceholderScreen(title: 'Login'),
+        builder: (_, __) => const LoginScreen(),
       ),
       GoRoute(
         name: RouteNames.studentDashboard,
         path: RouteNames.studentDashboardPath,
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Dashboard'),
+        builder: (_, __) => const StudentDashboardScreen(),
       ),
       GoRoute(
         name: RouteNames.mealCalendar,
         path: RouteNames.mealCalendarPath,
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Calendario'),
+        builder: (_, __) => const MealCalendarScreen(),
       ),
       GoRoute(
         name: RouteNames.subscriptions,
         path: RouteNames.subscriptionsPath,
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Suscripciones'),
+        builder: (_, __) => const SubscriptionsScreen(),
       ),
       GoRoute(
         name: RouteNames.payments,
         path: RouteNames.paymentsPath,
-        builder: (context, state) => const _PlaceholderScreen(title: 'Pagos'),
+        builder: (_, __) => const PaymentsScreen(),
       ),
       GoRoute(
         name: RouteNames.adjustments,
         path: RouteNames.adjustmentsPath,
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Ajustes'),
+        builder: (_, __) => const AdjustmentsScreen(),
       ),
       GoRoute(
         name: RouteNames.notifications,
         path: RouteNames.notificationsPath,
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Notificaciones'),
+        builder: (_, __) => const NotificationsScreen(),
       ),
       GoRoute(
         name: RouteNames.adminDashboard,
         path: RouteNames.adminDashboardPath,
-        builder: (context, state) => const _PlaceholderScreen(title: 'Admin'),
-      ),
-      GoRoute(
-        name: RouteNames.audit,
-        path: RouteNames.auditPath,
-        builder: (context, state) => const _PlaceholderScreen(title: 'Auditoría'),
+        builder: (_, __) => const AdminDashboardScreen(),
       ),
     ],
   );
-}
 
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const _PlaceholderScreen({required this.title});
+  static String? _redirectLogic(BuildContext context, GoRouterState state) {
+    final auth = context.read<AuthProvider>();
+    final loggedIn = auth.isAuthenticated;
+    final location = state.uri.toString();
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text(title)),
-    );
+    if (!loggedIn && location != RouteNames.loginPath) {
+      return RouteNames.loginPath;
+    }
+
+    if (loggedIn && location == RouteNames.loginPath) {
+      if (auth.isStudent) return RouteNames.studentDashboardPath;
+      return RouteNames.adminDashboardPath;
+    }
+
+    if (loggedIn && auth.isStudent && location == RouteNames.adminDashboardPath) {
+      return RouteNames.studentDashboardPath;
+    }
+
+    if (loggedIn && auth.isAdmin && location == RouteNames.studentDashboardPath) {
+      return RouteNames.adminDashboardPath;
+    }
+
+    return null;
   }
 }
