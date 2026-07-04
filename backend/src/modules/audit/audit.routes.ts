@@ -1,8 +1,9 @@
 ﻿import { Router } from 'express';
-import { authenticate, authorize } from '../../shared/index.js';
+import { authenticate, authorize, ROLES } from '../../shared/index.js';
+import * as controller from './audit.controller.js';
 
 const router = Router();
 
-// TODO: Implement routes
+router.get('/', authenticate, authorize(ROLES.ADMIN, ROLES.SUPERADMIN), controller.list);
 
 export default router;

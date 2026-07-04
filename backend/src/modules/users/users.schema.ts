@@ -1,2 +1,7 @@
 ﻿import { z } from 'zod';
-// TODO: Define Zod schemas
+
+export const updateProfileSchema = z.object({
+  fullName: z.string().min(1).max(100).optional(),
+});
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

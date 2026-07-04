@@ -1,2 +1,35 @@
 ﻿import * as repository from './meal-plans.repository.js';
-// TODO: Implement service logic
+import { ApiError } from '../../shared/index.js';
+
+export async function list(restaurantId: string) {
+  return repository.findByRestaurant(restaurantId);
+}
+
+export async function getById(id: string) {
+  const plan = await repository.findById(id);
+  if (!plan) {
+    throw new ApiError('Plan de comida no encontrado', 404, 'MEAL_PLAN_NOT_FOUND');
+  }
+  return plan;
+}
+
+export async function create(data: {
+  restaurantId: string;
+  name: string;
+  price: number;
+  durationDays: number;
+  description?: string;
+}) {
+  return repository.create(data);
+}
+
+export async function update(id: string, data: {
+  name?: string;
+  price?: number;
+  durationDays?: number;
+  description?: string;
+  isActive?: boolean;
+}) {
+  await getById(id);
+  return repository.update(id, data);
+}

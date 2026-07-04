@@ -1,4 +1,39 @@
 ﻿import type { Request, Response, NextFunction } from 'express';
-import { sendSuccess } from '../../shared/index.js';
+import * as service from './restaurants.service.js';
+import { sendSuccess, sendCreated } from '../../shared/index.js';
 
-// TODO: Implement controller functions
+export async function list(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const restaurants = await service.list();
+    sendSuccess(res, restaurants);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const restaurant = await service.getById(req.params.id);
+    sendSuccess(res, restaurant);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const restaurant = await service.create(req.body);
+    sendCreated(res, restaurant, 'Restaurante creado correctamente');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const restaurant = await service.update(req.params.id, req.body);
+    sendSuccess(res, restaurant, 'Restaurante actualizado correctamente');
+  } catch (err) {
+    next(err);
+  }
+}
