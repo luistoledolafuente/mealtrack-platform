@@ -29,4 +29,17 @@ class FormatHelpers {
         return capitalize(role);
     }
   }
+
+  static String paymentMethod(String method) {
+    switch (method) {
+      case 'cash':
+        return 'Efectivo';
+      case 'transfer':
+        return 'Transferencia';
+      case 'card':
+        return 'Tarjeta';
+      default:
+        return capitalize(method);
+    }
+  }
 }

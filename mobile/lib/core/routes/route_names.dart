@@ -10,8 +10,9 @@ class RouteNames {
   static const String notifications = 'notifications';
   static const String adminDashboard = 'adminDashboard';
   static const String audit = 'audit';
+  static const String qrValidate = 'qrValidate';
+  static const String qrIssue = 'qrIssue';
 
-  // Paths
   static const String loginPath = '/login';
   static const String studentDashboardPath = '/dashboard';
   static const String mealCalendarPath = '/calendar';
@@ -21,4 +22,6 @@ class RouteNames {
   static const String notificationsPath = '/notifications';
   static const String adminDashboardPath = '/admin';
   static const String auditPath = '/audit';
+  static const String qrValidatePath = '/qr/validate';
+  static const String qrIssuePath = '/qr/issue';
 }

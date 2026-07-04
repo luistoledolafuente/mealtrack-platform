@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../core/models/models.dart';
+import '../../../core/repositories/repositories.dart';
+import '../../../shared/helpers/format_helpers.dart';
 
-class PaymentsScreen extends StatelessWidget {
+class PaymentsScreen extends StatefulWidget {
   const PaymentsScreen({super.key});
+
+  @override
+  State<PaymentsScreen> createState() => _PaymentsScreenState();
+}
+
+class _PaymentsScreenState extends State<PaymentsScreen> {
+  late Future<List<PaymentModel>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = context.read<PaymentRepository>().getMyPayments();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,50 +31,44 @@ class PaymentsScreen extends StatelessWidget {
         title: const Text('Historial de pagos'),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _PaymentCard(
-            colorScheme: colorScheme,
-            textTheme: textTheme,
-            date: '01 Jul 2026',
-            amount: 'S/ 270.00',
-            method: 'Efectivo',
-            plan: 'Plan Mensual 30 Días',
-          ),
-          const SizedBox(height: 8),
-          _PaymentCard(
-            colorScheme: colorScheme,
-            textTheme: textTheme,
-            date: '01 Jun 2026',
-            amount: 'S/ 270.00',
-            method: 'Transferencia',
-            plan: 'Plan Mensual 30 Días',
-          ),
-          const SizedBox(height: 8),
-          _PaymentCard(
-            colorScheme: colorScheme,
-            textTheme: textTheme,
-            date: '15 May 2026',
-            amount: 'S/ 55.00',
-            method: 'Efectivo',
-            plan: 'Plan Semanal 5 Días',
-          ),
-        ],
+      body: FutureBuilder<List<PaymentModel>>(
+        future: _future,
+        builder: (_, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final payments = snap.data ?? [];
+          if (payments.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.payments_rounded, size: 64, color: colorScheme.outline),
+                  const SizedBox(height: 12),
+                  Text('Sin pagos registrados', style: textTheme.bodyLarge),
+                ],
+              ),
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: payments.map((p) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _PaymentCard(payment: p, colorScheme: colorScheme, textTheme: textTheme),
+            )).toList(),
+          );
+        },
       ),
     );
   }
 }
 
 class _PaymentCard extends StatelessWidget {
+  final PaymentModel payment;
   final ColorScheme colorScheme;
   final TextTheme textTheme;
-  final String date;
-  final String amount;
-  final String method;
-  final String plan;
 
-  const _PaymentCard({required this.colorScheme, required this.textTheme, required this.date, required this.amount, required this.method, required this.plan});
+  const _PaymentCard({required this.payment, required this.colorScheme, required this.textTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +81,7 @@ class _PaymentCard extends StatelessWidget {
           children: [
             Container(
               width: 44, height: 44,
-              decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: BoxDecoration(color: colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(12)),
               child: Icon(Icons.payments_rounded, color: colorScheme.onSecondaryContainer),
             ),
             const SizedBox(width: 12),
@@ -81,10 +89,10 @@ class _PaymentCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(amount, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(FormatHelpers.currency(payment.amount), style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 2),
-                  Text(plan, style: textTheme.bodySmall),
-                  Text('$date • $method', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                  Text('${payment.paymentDate.day}/${payment.paymentDate.month}/${payment.paymentDate.year}', style: textTheme.bodySmall),
+                  Text(FormatHelpers.paymentMethod(payment.paymentMethod), style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),

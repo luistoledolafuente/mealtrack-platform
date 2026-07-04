@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../core/models/models.dart';
+import '../../../core/repositories/repositories.dart';
 
-class SubscriptionsScreen extends StatelessWidget {
+class SubscriptionsScreen extends StatefulWidget {
   const SubscriptionsScreen({super.key});
+
+  @override
+  State<SubscriptionsScreen> createState() => _SubscriptionsScreenState();
+}
+
+class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
+  late Future<List<SubscriptionModel>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = context.read<SubscriptionRepository>().getMySubscriptions();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,68 +30,50 @@ class SubscriptionsScreen extends StatelessWidget {
         title: const Text('Suscripciones'),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _SubscriptionCard(
-            colorScheme: colorScheme,
-            textTheme: textTheme,
-            planName: 'Plan Mensual 30 Días',
-            status: 'Activo',
-            remainingDays: 22,
-            contractedDays: 30,
-            startDate: '01 Jul 2026',
-            endDate: '31 Jul 2026',
-            price: 'S/ 270.00',
-          ),
-          const SizedBox(height: 12),
-          _SubscriptionCard(
-            colorScheme: colorScheme,
-            textTheme: textTheme,
-            planName: 'Plan Semanal 5 Días',
-            status: 'Finalizado',
-            remainingDays: 0,
-            contractedDays: 5,
-            startDate: '15 Jun 2026',
-            endDate: '20 Jun 2026',
-            price: 'S/ 55.00',
-            isExpired: true,
-          ),
-        ],
+      body: FutureBuilder<List<SubscriptionModel>>(
+        future: _future,
+        builder: (_, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final subs = snap.data ?? [];
+          if (subs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.receipt_long_rounded, size: 64, color: colorScheme.outline),
+                  const SizedBox(height: 12),
+                  Text('Sin suscripciones activas', style: textTheme.bodyLarge),
+                ],
+              ),
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: subs.map((s) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _SubscriptionCard(subscription: s, colorScheme: colorScheme, textTheme: textTheme),
+            )).toList(),
+          );
+        },
       ),
     );
   }
 }
 
 class _SubscriptionCard extends StatelessWidget {
+  final SubscriptionModel subscription;
   final ColorScheme colorScheme;
   final TextTheme textTheme;
-  final String planName;
-  final String status;
-  final int remainingDays;
-  final int contractedDays;
-  final String startDate;
-  final String endDate;
-  final String price;
-  final bool isExpired;
 
-  const _SubscriptionCard({
-    required this.colorScheme,
-    required this.textTheme,
-    required this.planName,
-    required this.status,
-    required this.remainingDays,
-    required this.contractedDays,
-    required this.startDate,
-    required this.endDate,
-    required this.price,
-    this.isExpired = false,
-  });
+  const _SubscriptionCard({required this.subscription, required this.colorScheme, required this.textTheme});
 
   @override
   Widget build(BuildContext context) {
-    final containerColor = isExpired ? colorScheme.surfaceContainerLow : colorScheme.primaryContainer;
-    final onColor = isExpired ? colorScheme.onSurfaceVariant : colorScheme.onPrimaryContainer;
+    final expired = !subscription.isActive;
+    final containerColor = expired ? colorScheme.surfaceContainerLow : colorScheme.primaryContainer;
+    final onColor = expired ? colorScheme.onSurfaceVariant : colorScheme.onPrimaryContainer;
 
     return Card(
       elevation: 0,
@@ -88,25 +86,21 @@ class _SubscriptionCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text(planName, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600))),
+                Expanded(child: Text(subscription.mealPlanName, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600))),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isExpired ? colorScheme.outlineVariant : colorScheme.primary.withValues(alpha: 0.2),
+                    color: expired ? colorScheme.outlineVariant : colorScheme.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(status, style: textTheme.labelSmall?.copyWith(
-                    color: onColor, fontWeight: FontWeight.w600,
-                  )),
+                  child: Text(subscription.status, style: textTheme.labelSmall?.copyWith(color: onColor, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Text('\$$remainingDays / $contractedDays días restantes', style: textTheme.bodyMedium),
+            Text('${subscription.remainingDays} / ${subscription.contractedDays} días restantes', style: textTheme.bodyMedium),
             const SizedBox(height: 4),
-            Text('$startDate → $endDate', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 4),
-            Text(price, style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: onColor)),
+            Text('Inicio: ${subscription.startDate.day}/${subscription.startDate.month}/${subscription.startDate.year}', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
           ],
         ),
       ),

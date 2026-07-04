@@ -11,6 +11,9 @@ import '../../features/subscriptions/presentation/subscriptions_screen.dart';
 import '../../features/payments/presentation/payments_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/adjustments/presentation/adjustments_screen.dart';
+import '../../features/audit/presentation/audit_screen.dart';
+import '../../features/qr/presentation/qr_validate_screen.dart';
+import '../../features/qr/presentation/qr_issue_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -58,6 +61,21 @@ class AppRouter {
         name: RouteNames.adminDashboard,
         path: RouteNames.adminDashboardPath,
         builder: (_, __) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.audit,
+        path: RouteNames.auditPath,
+        builder: (_, __) => const AuditScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.qrValidate,
+        path: RouteNames.qrValidatePath,
+        builder: (_, __) => const QrValidateScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.qrIssue,
+        path: RouteNames.qrIssuePath,
+        builder: (_, __) => const QrIssueScreen(),
       ),
     ],
   );
