@@ -1,4 +1,4 @@
-﻿import * as repository from './daily-meals.repository.js';
+import * as repository from './daily-meals.repository.js';
 import * as subscriptionRepository from '../subscriptions/subscriptions.repository.js';
 import { ApiError } from '../../shared/index.js';
 
@@ -12,6 +12,7 @@ export async function list(filters: {
   const queryFilters: {
     studentId?: string;
     subscriptionId?: string;
+    restaurantId?: string;
     from?: Date;
     to?: Date;
     status?: string;
@@ -24,6 +25,8 @@ export async function list(filters: {
 
   if (role === 'student') {
     queryFilters.studentId = userId;
+  } else if (restaurantId) {
+    queryFilters.restaurantId = restaurantId;
   }
 
   return repository.findMany(queryFilters);
@@ -37,16 +40,30 @@ export async function getById(id: string) {
   return meal;
 }
 
-export async function create(data: {
-  subscriptionId: string;
-  mealDate: string;
-  status: string;
-  validationSource?: string;
-}, userId: string) {
+export async function create(
+  data: {
+    subscriptionId: string;
+    mealDate: string;
+    status: string;
+    validationSource?: string;
+  },
+  userId: string,
+  userRole: string,
+  userRestaurantId: string | null
+) {
   const subscription = await subscriptionRepository.findById(data.subscriptionId);
   if (!subscription) {
     throw new ApiError('Suscripción no encontrada', 404, 'SUBSCRIPTION_NOT_FOUND');
   }
+
+  // Multi-tenant & Role validation
+  if (userRole === 'student' && subscription.studentId !== userId) {
+    throw new ApiError('No autorizado para registrar consumos en esta suscripción', 403, 'FORBIDDEN');
+  }
+  if (userRole === 'admin' && subscription.restaurantId !== userRestaurantId) {
+    throw new ApiError('No autorizado para registrar consumos en esta suscripción', 403, 'FORBIDDEN');
+  }
+
   if (subscription.status !== 'active') {
     throw new ApiError('La suscripción no está activa', 400, 'SUBSCRIPTION_NOT_ACTIVE');
   }

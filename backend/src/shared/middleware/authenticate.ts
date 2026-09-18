@@ -28,6 +28,7 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     const decoded = jwt.verify(token, env.jwt.secret) as JwtPayload;
 
     req.user = decoded;
+    req.tenantId = decoded.restaurantId ?? req.headers['x-tenant-id'] as string ?? null;
     next();
   } catch (err) {
     if (err instanceof ApiError) return next(err);

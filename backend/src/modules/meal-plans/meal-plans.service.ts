@@ -29,7 +29,10 @@ export async function update(id: string, data: {
   durationDays?: number;
   description?: string;
   isActive?: boolean;
-}) {
-  await getById(id);
+}, userRole: string, userRestaurantId: string | null) {
+  const plan = await getById(id);
+  if (userRole !== 'superadmin' && plan.restaurantId !== userRestaurantId) {
+    throw new ApiError('No autorizado para operar en este plan', 403, 'FORBIDDEN');
+  }
   return repository.update(id, data);
 }

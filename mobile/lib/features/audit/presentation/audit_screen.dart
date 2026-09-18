@@ -45,7 +45,7 @@ class _AuditScreenState extends State<AuditScreen> {
                 children: [
                   Icon(Icons.error_outline, size: 48, color: colorScheme.error),
                   const SizedBox(height: 8),
-                  Text('Error al cargar auditoría'),
+                  const Text('Error al cargar auditoría'),
                   const SizedBox(height: 8),
                   FilledButton.tonal(onPressed: () => setState(() => _logsFuture = _loadLogs()), child: const Text('Reintentar')),
                 ],

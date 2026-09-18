@@ -1,4 +1,4 @@
-﻿import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import * as service from './daily-meals.service.js';
 import { sendSuccess, sendCreated } from '../../shared/index.js';
 
@@ -27,7 +27,12 @@ export async function getById(req: Request, res: Response, next: NextFunction): 
 
 export async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const meal = await service.create(req.body, req.user!.id);
+    const meal = await service.create(
+      req.body,
+      req.user!.id,
+      req.user!.role,
+      req.user!.restaurantId,
+    );
     sendCreated(res, meal, 'Consumo registrado correctamente');
   } catch (err) {
     next(err);

@@ -1,5 +1,6 @@
-﻿import * as repository from './payments.repository.js';
+import * as repository from './payments.repository.js';
 import * as subscriptionRepository from '../subscriptions/subscriptions.repository.js';
+import * as notificationRepository from '../notifications/notifications.repository.js';
 import { ApiError } from '../../shared/index.js';
 
 export async function list(userId: string, role: string, restaurantId: string | null) {
@@ -36,7 +37,11 @@ export async function create(data: {
     throw new ApiError('Suscripción no encontrada', 404, 'SUBSCRIPTION_NOT_FOUND');
   }
 
-  return repository.create({
+  if (subscription.restaurantId !== restaurantId) {
+    throw new ApiError('La suscripción no pertenece al restaurante especificado', 403, 'FORBIDDEN');
+  }
+
+  const payment = await repository.create({
     subscriptionId: data.subscriptionId,
     studentId: subscription.studentId,
     restaurantId,
@@ -46,4 +51,13 @@ export async function create(data: {
     reference: data.referenceCode,
     registeredBy: userId,
   });
+
+  await notificationRepository.create({
+    userId: subscription.studentId,
+    type: 'payment',
+    title: 'Pago registrado',
+    message: `Se registró un pago de ${data.amount.toFixed(2)} para tu suscripción`,
+  });
+
+  return payment;
 }

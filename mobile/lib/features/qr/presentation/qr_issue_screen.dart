@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/repositories/repositories.dart';
 
 class QrIssueScreen extends StatefulWidget {
-  const QrIssueScreen({super.key});
+  final String? subscriptionId;
+  const QrIssueScreen({super.key, this.subscriptionId});
 
   @override
   State<QrIssueScreen> createState() => _QrIssueScreenState();
@@ -15,6 +16,17 @@ class _QrIssueScreenState extends State<QrIssueScreen> {
   bool _loading = false;
   Map<String, dynamic>? _result;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.subscriptionId != null) {
+      _subscriptionController.text = widget.subscriptionId!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _issue();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -56,6 +68,7 @@ class _QrIssueScreenState extends State<QrIssueScreen> {
             const SizedBox(height: 24),
             TextField(
               controller: _subscriptionController,
+              readOnly: widget.subscriptionId != null,
               decoration: const InputDecoration(
                 labelText: 'ID de suscripción',
                 prefixIcon: Icon(Icons.receipt_long_rounded),

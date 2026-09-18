@@ -127,7 +127,7 @@ async function main() {
   });
 
   // Subscriptions
-  await prisma.subscription.create({
+  const sub1 = await prisma.subscription.create({
     data: {
       id: uuid(),
       studentId: student1.id,
@@ -140,7 +140,7 @@ async function main() {
     },
   });
 
-  await prisma.subscription.create({
+  const sub2 = await prisma.subscription.create({
     data: {
       id: uuid(),
       studentId: student2.id,
@@ -150,6 +150,81 @@ async function main() {
       contractedDays: 30,
       remainingDays: 5,
       status: 'active',
+    },
+  });
+
+  // Daily Meals for Student 1
+  await prisma.dailyMeal.create({
+    data: {
+      id: uuid(),
+      subscriptionId: sub1.id,
+      studentId: student1.id,
+      date: new Date('2026-07-01'),
+      status: 'consumed',
+      registeredBy: admin1.id,
+      validationMethod: 'QR',
+    },
+  });
+
+  await prisma.dailyMeal.create({
+    data: {
+      id: uuid(),
+      subscriptionId: sub1.id,
+      studentId: student1.id,
+      date: new Date('2026-07-02'),
+      status: 'consumed',
+      registeredBy: admin1.id,
+      validationMethod: 'QR',
+    },
+  });
+
+  const mealToAdjust = await prisma.dailyMeal.create({
+    data: {
+      id: uuid(),
+      subscriptionId: sub1.id,
+      studentId: student1.id,
+      date: new Date('2026-07-03'),
+      status: 'not_consumed',
+      registeredBy: admin1.id,
+      validationMethod: 'manual',
+    },
+  });
+
+  // Payments
+  await prisma.payment.create({
+    data: {
+      id: uuid(),
+      subscriptionId: sub1.id,
+      studentId: student1.id,
+      restaurantId: restaurant1.id,
+      amount: 270.00,
+      paymentDate: new Date('2026-07-01'),
+      paymentMethod: 'cash',
+      registeredBy: admin1.id,
+    },
+  });
+
+  await prisma.payment.create({
+    data: {
+      id: uuid(),
+      subscriptionId: sub2.id,
+      studentId: student2.id,
+      restaurantId: restaurant1.id,
+      amount: 270.00,
+      paymentDate: new Date('2026-06-15'),
+      paymentMethod: 'transfer',
+      registeredBy: admin1.id,
+    },
+  });
+
+  // Adjustment Requests
+  await prisma.adjustmentRequest.create({
+    data: {
+      id: uuid(),
+      dailyMealId: mealToAdjust.id,
+      requesterId: student1.id,
+      reason: 'Estuve enfermo y no pude asistir al comedor',
+      status: 'pending',
     },
   });
 

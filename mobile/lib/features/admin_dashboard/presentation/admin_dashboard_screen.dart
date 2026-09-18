@@ -106,7 +106,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         const SizedBox(height: 24),
                         Text('Gestión', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 12),
-                        _ManagementGrid(colorScheme: colorScheme),
+                        _ManagementGrid(
+                          colorScheme: colorScheme,
+                          showAudit: context.watch<AuthProvider>().isSuperadmin,
+                        ),
                       ],
                     ),
                   ),
@@ -140,17 +143,20 @@ class _SummaryCard extends StatelessWidget {
 
 class _ManagementGrid extends StatelessWidget {
   final ColorScheme colorScheme;
-  const _ManagementGrid({required this.colorScheme});
+  final bool showAudit;
+  const _ManagementGrid({required this.colorScheme, required this.showAudit});
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      _ActionItem(icon: Icons.calendar_month_rounded, label: 'Validar consumos', route: RouteNames.mealCalendarPath),
-      _ActionItem(icon: Icons.people_rounded, label: 'Estudiantes', route: RouteNames.subscriptionsPath),
-      _ActionItem(icon: Icons.payments_rounded, label: 'Pagos', route: RouteNames.paymentsPath),
-      _ActionItem(icon: Icons.edit_note_rounded, label: 'Solicitudes', route: RouteNames.adjustmentsPath),
-      _ActionItem(icon: Icons.history_rounded, label: 'Auditoría', route: RouteNames.auditPath),
-      _ActionItem(icon: Icons.qr_code_scanner_rounded, label: 'Validar QR', route: RouteNames.qrValidatePath),
+      const _ActionItem(icon: Icons.person_add_alt_1_rounded, label: 'Agregar estudiante', route: RouteNames.addStudentPath),
+      const _ActionItem(icon: Icons.calendar_month_rounded, label: 'Validar consumos', route: RouteNames.mealCalendarPath),
+      const _ActionItem(icon: Icons.people_rounded, label: 'Estudiantes', route: RouteNames.subscriptionsPath),
+      const _ActionItem(icon: Icons.payments_rounded, label: 'Pagos', route: RouteNames.paymentsPath),
+      const _ActionItem(icon: Icons.edit_note_rounded, label: 'Solicitudes', route: RouteNames.adjustmentsPath),
+      if (showAudit)
+        const _ActionItem(icon: Icons.history_rounded, label: 'Auditoría', route: RouteNames.auditPath),
+      const _ActionItem(icon: Icons.qr_code_scanner_rounded, label: 'Validar QR', route: RouteNames.qrValidatePath),
     ];
 
     return GridView.builder(

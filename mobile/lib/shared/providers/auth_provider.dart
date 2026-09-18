@@ -12,6 +12,7 @@ class UserData {
   final String email;
   final String role;
   final String? restaurantId;
+  final bool mustChangePassword;
 
   const UserData({
     required this.id,
@@ -19,6 +20,7 @@ class UserData {
     required this.email,
     required this.role,
     this.restaurantId,
+    this.mustChangePassword = false,
   });
 
   factory UserData.fromJson(Map<String, dynamic> json) => UserData(
@@ -27,6 +29,7 @@ class UserData {
         email: json['email'] as String,
         role: json['role'] as String,
         restaurantId: json['restaurantId'] as String?,
+        mustChangePassword: json['mustChangePassword'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -35,7 +38,17 @@ class UserData {
         'email': email,
         'role': role,
         'restaurantId': restaurantId,
+        'mustChangePassword': mustChangePassword,
       };
+
+  UserData copyWith({bool? mustChangePassword}) => UserData(
+        id: id,
+        fullName: fullName,
+        email: email,
+        role: role,
+        restaurantId: restaurantId,
+        mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+      );
 }
 
 class AuthProvider extends ChangeNotifier {
@@ -109,6 +122,17 @@ class AuthProvider extends ChangeNotifier {
       );
     }
     notifyListeners();
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    await _api.patch(ApiConstants.changePassword, body: {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+    if (_user != null) {
+      _user = _user!.copyWith(mustChangePassword: false);
+      notifyListeners();
+    }
   }
 
   Future<void> logout() async {

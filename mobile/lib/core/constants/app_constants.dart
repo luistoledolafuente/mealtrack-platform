@@ -8,7 +8,10 @@ class AppConstants {
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'http://localhost:3000/api/v1';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:3000/api/v1',
+  );
 
   // Auth
   static const String login = '/auth/login';
@@ -17,6 +20,8 @@ class ApiConstants {
 
   // Users
   static const String userProfile = '/users/me';
+  static const String changePassword = '/users/me/password';
+  static const String createUser = '/users';
 
   // Restaurants
   static const String restaurants = '/restaurants';

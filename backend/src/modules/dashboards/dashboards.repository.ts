@@ -1,9 +1,12 @@
-﻿import { prisma } from '../../config/database.js';
+import { prisma } from '../../config/database.js';
 
 export async function getActiveSubscription(studentId: string) {
   return prisma.subscription.findFirst({
     where: { studentId, status: 'active' },
-    include: { mealPlan: { select: { name: true } } },
+    include: {
+      mealPlan: { select: { name: true } },
+      restaurant: { select: { name: true } },
+    },
     orderBy: { createdAt: 'desc' },
   });
 }

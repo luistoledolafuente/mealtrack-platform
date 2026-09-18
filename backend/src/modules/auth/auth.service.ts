@@ -18,13 +18,15 @@ export async function login(email: string, password: string) {
     restaurantId: user.restaurantId,
   });
 
-  return {
+return {
     accessToken,
     user: {
       id: user.id,
       fullName: user.fullName,
       email: user.email,
       role: user.role,
+      restaurantId: user.restaurantId,
+      mustChangePassword: user.mustChangePassword,
     },
   };
 }
@@ -42,6 +44,7 @@ export async function getProfile(userId: string) {
     role: user.role,
     restaurantId: user.restaurantId,
     isActive: user.isActive,
+    mustChangePassword: user.mustChangePassword,
     createdAt: user.createdAt,
   };
 }

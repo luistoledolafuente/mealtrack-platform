@@ -1,9 +1,12 @@
-﻿import { prisma } from '../../config/database.js';
+import { prisma } from '../../config/database.js';
 
 export async function findByStudent(studentId: string) {
   return prisma.subscription.findMany({
     where: { studentId },
-    include: { mealPlan: { select: { name: true, price: true } } },
+    include: {
+      mealPlan: { select: { name: true, price: true } },
+      restaurant: { select: { name: true } },
+    },
     orderBy: { createdAt: 'desc' },
   });
 }
@@ -14,6 +17,7 @@ export async function findByRestaurant(restaurantId: string) {
     include: {
       mealPlan: { select: { name: true, price: true } },
       student: { select: { id: true, fullName: true, email: true } },
+      restaurant: { select: { name: true } },
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -25,6 +29,7 @@ export async function findById(id: string) {
     include: {
       mealPlan: { select: { name: true, price: true } },
       student: { select: { id: true, fullName: true, email: true } },
+      restaurant: { select: { name: true } },
     },
   });
 }
@@ -50,7 +55,10 @@ export async function update(id: string, data: {
 export async function findActiveByStudent(studentId: string) {
   return prisma.subscription.findFirst({
     where: { studentId, status: 'active' },
-    include: { mealPlan: { select: { name: true, price: true } } },
+    include: {
+      mealPlan: { select: { name: true, price: true } },
+      restaurant: { select: { name: true } },
+    },
     orderBy: { createdAt: 'desc' },
   });
 }

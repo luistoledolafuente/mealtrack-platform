@@ -1,4 +1,4 @@
-﻿import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import * as service from './adjustment-requests.service.js';
 import { sendSuccess, sendCreated } from '../../shared/index.js';
 
@@ -22,7 +22,13 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 
 export async function review(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const result = await service.review(req.params.id, req.body, req.user!.id);
+    const result = await service.review(
+      req.params.id,
+      req.body,
+      req.user!.id,
+      req.user!.role,
+      req.user!.restaurantId,
+    );
     sendSuccess(res, result, 'Solicitud revisada correctamente');
   } catch (err) {
     next(err);

@@ -3,6 +3,7 @@
 export async function findMany(filters: {
   studentId?: string;
   subscriptionId?: string;
+  restaurantId?: string;
   from?: Date;
   to?: Date;
   status?: string;
@@ -11,6 +12,9 @@ export async function findMany(filters: {
   if (filters.studentId) where.studentId = filters.studentId;
   if (filters.subscriptionId) where.subscriptionId = filters.subscriptionId;
   if (filters.status) where.status = filters.status;
+  if (filters.restaurantId) {
+    where.subscription = { restaurantId: filters.restaurantId };
+  }
   if (filters.from || filters.to) {
     where.date = {};
     if (filters.from) (where.date as Record<string, unknown>).gte = filters.from;

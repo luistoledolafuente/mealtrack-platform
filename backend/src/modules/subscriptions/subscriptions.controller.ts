@@ -31,7 +31,7 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const subscription = await service.update(req.params.id, req.body);
+    const subscription = await service.update(req.params.id, req.body, req.user!.role, req.tenantId);
     sendSuccess(res, subscription, 'Suscripción actualizada correctamente');
   } catch (err) {
     next(err);

@@ -8,13 +8,15 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  fullName       String
-  email          String   @unique
-  passwordHash   String
-  role           String   // student | admin | superadmin
-  isActive       Boolean  @default(true)
-  restaurantId   String?
+  id                 String   @id @default(uuid())
+  fullName           String
+  email              String   @unique
+  passwordHash       String
+  phone              String?
+  role               String   // student | admin | superadmin
+  isActive           Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  restaurantId       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -22,7 +24,8 @@ model User {
   subscriptions Subscription[]
   dailyMeals    DailyMeal[]
   payments      Payment[]
-  adjustments   AdjustmentRequest[]
+  requestedAdjustments AdjustmentRequest[] @relation("AdjustmentRequester")
+  reviewedAdjustments  AdjustmentRequest[] @relation("AdjustmentReviewer")
   notifications Notification[]
   auditLogs     AuditLog[]
 
@@ -116,8 +119,8 @@ model AdjustmentRequest {
   updatedAt   DateTime @updatedAt
 
   dailyMeal DailyMeal @relation(fields: [dailyMealId], references: [id])
-  requester User      @relation(fields: [requesterId], references: [id])
-  reviewer  User?     @relation(fields: [reviewerId], references: [id])
+  requester User      @relation("AdjustmentRequester", fields: [requesterId], references: [id])
+  reviewer  User?     @relation("AdjustmentReviewer", fields: [reviewerId], references: [id])
 
   @@map("adjustment_requests")
 }

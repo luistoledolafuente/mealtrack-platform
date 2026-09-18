@@ -101,6 +101,16 @@ class _SubscriptionCard extends StatelessWidget {
             Text('${subscription.remainingDays} / ${subscription.contractedDays} días restantes', style: textTheme.bodyMedium),
             const SizedBox(height: 4),
             Text('Inicio: ${subscription.startDate.day}/${subscription.startDate.month}/${subscription.startDate.year}', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+            if (subscription.restaurantName.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Restaurante: ${subscription.restaurantName}',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ],
         ),
       ),

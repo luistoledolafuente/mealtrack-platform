@@ -11,6 +11,7 @@ export async function findByEmail(email: string) {
       role: true,
       restaurantId: true,
       isActive: true,
+      mustChangePassword: true,
     },
   });
 }
@@ -25,6 +26,7 @@ export async function findById(id: string) {
       role: true,
       restaurantId: true,
       isActive: true,
+      mustChangePassword: true,
       createdAt: true,
     },
   });

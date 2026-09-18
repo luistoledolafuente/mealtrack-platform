@@ -2,18 +2,22 @@ class UserModel {
   final String id;
   final String fullName;
   final String email;
+  final String? phone;
   final String role;
   final String? restaurantId;
   final bool isActive;
+  final bool mustChangePassword;
   final DateTime createdAt;
 
   const UserModel({
     required this.id,
     required this.fullName,
     required this.email,
+    this.phone,
     required this.role,
     this.restaurantId,
-    required this.isActive,
+    this.isActive = true,
+    this.mustChangePassword = false,
     required this.createdAt,
   });
 
@@ -21,10 +25,36 @@ class UserModel {
         id: json['id'] as String,
         fullName: json['fullName'] as String,
         email: json['email'] as String,
+        phone: json['phone'] as String?,
         role: json['role'] as String,
         restaurantId: json['restaurantId'] as String?,
         isActive: json['isActive'] as bool? ?? true,
+        mustChangePassword: json['mustChangePassword'] as bool? ?? false,
         createdAt: DateTime.parse(json['createdAt'] as String),
+      );
+}
+
+class MealPlanModel {
+  final String id;
+  final String name;
+  final double price;
+  final int durationDays;
+  final bool isActive;
+
+  const MealPlanModel({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.durationDays,
+    this.isActive = true,
+  });
+
+  factory MealPlanModel.fromJson(Map<String, dynamic> json) => MealPlanModel(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        price: (json['price'] as num).toDouble(),
+        durationDays: json['durationDays'] as int,
+        isActive: json['isActive'] as bool? ?? true,
       );
 }
 
@@ -39,6 +69,7 @@ class SubscriptionModel {
   final String status;
   final String mealPlanName;
   final double mealPlanPrice;
+  final String restaurantName;
 
   const SubscriptionModel({
     required this.id,
@@ -51,19 +82,23 @@ class SubscriptionModel {
     required this.status,
     this.mealPlanName = '',
     this.mealPlanPrice = 0,
+    this.restaurantName = '',
   });
 
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) => SubscriptionModel(
-        id: json['id'] as String,
-        studentId: json['studentId'] as String,
-        mealPlanId: json['mealPlanId'] as String,
-        restaurantId: json['restaurantId'] as String,
-        startDate: DateTime.parse(json['startDate'] as String),
-        contractedDays: json['contractedDays'] as int,
-        remainingDays: json['remainingDays'] as int,
-        status: json['status'] as String,
-        mealPlanName: json['mealPlan']?['name'] as String? ?? '',
+        id: json['id'] as String? ?? '',
+        studentId: json['studentId'] as String? ?? '',
+        mealPlanId: json['mealPlanId'] as String? ?? '',
+        restaurantId: json['restaurantId'] as String? ?? '',
+        startDate: json['startDate'] != null
+            ? DateTime.parse(json['startDate'] as String)
+            : DateTime.now(),
+        contractedDays: json['contractedDays'] as int? ?? 0,
+        remainingDays: json['remainingDays'] as int? ?? 0,
+        status: json['status'] as String? ?? 'inactive',
+        mealPlanName: json['mealPlan']?['name'] as String? ?? json['mealPlanName'] as String? ?? '',
         mealPlanPrice: (json['mealPlan']?['price'] as num?)?.toDouble() ?? 0,
+        restaurantName: json['restaurant']?['name'] as String? ?? json['restaurantName'] as String? ?? '',
       );
 
   bool get isActive => status == 'active';
@@ -90,12 +125,14 @@ class DailyMealModel {
   });
 
   factory DailyMealModel.fromJson(Map<String, dynamic> json) => DailyMealModel(
-        id: json['id'] as String,
-        subscriptionId: json['subscriptionId'] as String,
-        studentId: json['studentId'] as String,
-        date: DateTime.parse(json['date'] as String),
-        status: json['status'] as String,
-        registeredBy: json['registeredBy'] as String,
+        id: json['id'] as String? ?? '',
+        subscriptionId: json['subscriptionId'] as String? ?? '',
+        studentId: json['studentId'] as String? ?? '',
+        date: json['date'] != null
+            ? DateTime.parse(json['date'] as String)
+            : DateTime.now(),
+        status: json['status'] as String? ?? 'pending',
+        registeredBy: json['registeredBy'] as String? ?? '',
         validationMethod: json['validationMethod'] as String?,
       );
 }
@@ -172,6 +209,8 @@ class AdjustmentRequestModel {
   final String? reviewerId;
   final String? resolution;
   final DateTime createdAt;
+  final String requesterName;
+  final DateTime? mealDate;
 
   const AdjustmentRequestModel({
     required this.id,
@@ -182,6 +221,8 @@ class AdjustmentRequestModel {
     this.reviewerId,
     this.resolution,
     required this.createdAt,
+    this.requesterName = '',
+    this.mealDate,
   });
 
   factory AdjustmentRequestModel.fromJson(Map<String, dynamic> json) =>
@@ -194,6 +235,10 @@ class AdjustmentRequestModel {
         reviewerId: json['reviewerId'] as String?,
         resolution: json['resolution'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
+        requesterName: json['requester']?['fullName'] as String? ?? '',
+        mealDate: json['dailyMeal']?['date'] != null
+            ? DateTime.parse(json['dailyMeal']['date'] as String)
+            : null,
       );
 }
 

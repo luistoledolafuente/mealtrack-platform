@@ -10,6 +10,7 @@ import paymentsRoutes from '../modules/payments/payments.routes.js';
 import notificationsRoutes from '../modules/notifications/notifications.routes.js';
 import dashboardsRoutes from '../modules/dashboards/dashboards.routes.js';
 import auditRoutes from '../modules/audit/audit.routes.js';
+import qrRoutes from '../modules/qr/qr.routes.js';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/payments', paymentsRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/dashboards', dashboardsRoutes);
 router.use('/audit-logs', auditRoutes);
+router.use('/qr', qrRoutes);
 
 export default router;

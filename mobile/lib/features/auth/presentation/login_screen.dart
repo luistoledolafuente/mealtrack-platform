@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/network/api_exceptions.dart';
 import '../../../shared/providers/auth_provider.dart';
+import '../../../core/routes/route_names.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,10 +32,15 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _errorMessage = null);
 
     try {
-      await context.read<AuthProvider>().login(
+      final auth = context.read<AuthProvider>();
+      await auth.login(
             _emailController.text.trim(),
             _passwordController.text,
           );
+      if (!mounted) return;
+      context.go(
+        auth.isStudent ? RouteNames.studentDashboardPath : RouteNames.adminDashboardPath,
+      );
     } on ApiException catch (e) {
       setState(() => _errorMessage = e.message);
     } catch (e) {

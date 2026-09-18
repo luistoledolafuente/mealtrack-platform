@@ -1,6 +1,35 @@
 import '../models/models.dart';
 import '../datasources/remote_sources.dart';
 
+class UserRepository {
+  final UserRemoteSource _remote;
+  UserRepository(this._remote);
+
+  Future<Map<String, dynamic>> createUser({
+    required String fullName,
+    required String email,
+    String? phone,
+    String? password,
+    String? role,
+    String? planId,
+  }) =>
+      _remote.createUser(
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        password: password,
+        role: role,
+        planId: planId,
+      );
+}
+
+class MealPlanRepository {
+  final MealPlanRemoteSource _remote;
+  MealPlanRepository(this._remote);
+
+  Future<List<MealPlanModel>> getMealPlans() => _remote.getMealPlans();
+}
+
 class SubscriptionRepository {
   final SubscriptionRemoteSource _remote;
   SubscriptionRepository(this._remote);
@@ -58,6 +87,17 @@ class AdjustmentRepository {
     required String reason,
   }) =>
       _remote.createAdjustment(dailyMealId: dailyMealId, reason: reason);
+
+  Future<void> reviewAdjustment({
+    required String id,
+    required String decision,
+    String? resolutionNotes,
+  }) =>
+      _remote.reviewAdjustment(
+        id: id,
+        decision: decision,
+        resolutionNotes: resolutionNotes,
+      );
 }
 
 class AuditRepository {

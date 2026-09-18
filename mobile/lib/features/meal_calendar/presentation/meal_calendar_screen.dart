@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../core/models/models.dart';
+import '../../../core/repositories/repositories.dart';
+import '../../../shared/providers/auth_provider.dart';
 
 class MealCalendarScreen extends StatefulWidget {
   const MealCalendarScreen({super.key});
@@ -10,21 +14,209 @@ class MealCalendarScreen extends StatefulWidget {
 
 class _MealCalendarScreenState extends State<MealCalendarScreen> {
   late DateTime _currentMonth;
+  List<DailyMealModel> _meals = [];
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
     _currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
+    _loadMeals();
   }
 
-  void _previousMonth() => setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1));
-  void _nextMonth() => setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1));
+  Future<void> _loadMeals() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final repo = context.read<DailyMealRepository>();
+      final data = await repo.getMeals(
+        month: _currentMonth.month.toString(),
+        year: _currentMonth.year.toString(),
+      );
+      if (mounted) setState(() { _meals = data; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = 'Error al cargar consumos'; _loading = false; });
+    }
+  }
+
+  void _previousMonth() {
+    setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1));
+    _loadMeals();
+  }
+
+  void _nextMonth() {
+    setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1));
+    _loadMeals();
+  }
+
+  DailyMealModel? _getMealForDay(int day) {
+    for (final m in _meals) {
+      if (m.date.year == _currentMonth.year &&
+          m.date.month == _currentMonth.month &&
+          m.date.day == day) {
+        return m;
+      }
+    }
+    return null;
+  }
+
+  void _showAdjustmentDialog(BuildContext context, DailyMealModel meal) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Solicitar Ajuste'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Fecha: ${meal.date.day}/${meal.date.month}/${meal.date.year}'),
+            Text('Estado actual: ${_statusLabel(meal.status)}'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'Motivo del ajuste',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final reason = controller.text.trim();
+              if (reason.isEmpty) return;
+              
+              final messenger = ScaffoldMessenger.of(context);
+              final repository = context.read<AdjustmentRepository>();
+              
+              Navigator.pop(context);
+              
+              setState(() => _loading = true);
+              try {
+                await repository.createAdjustment(
+                  dailyMealId: meal.id,
+                  reason: reason,
+                );
+                if (mounted) {
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Solicitud de ajuste creada correctamente')),
+                  );
+                  _loadMeals();
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _loading = false);
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Error al crear solicitud de ajuste')),
+                  );
+                }
+              }
+            },
+            child: const Text('Enviar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRegisterTodayDialog() async {
+    setState(() => _loading = true);
+    String? subId;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final subRepo = context.read<SubscriptionRepository>();
+      final subs = await subRepo.getMySubscriptions();
+      SubscriptionModel? activeSub;
+      for (final s in subs) {
+        if (s.isActive) {
+          activeSub = s;
+          break;
+        }
+      }
+      if (activeSub == null) throw Exception();
+      subId = activeSub.id;
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loading = false);
+        messenger.showSnackBar(
+          const SnackBar(content: Text('No tienes una suscripción activa para registrar consumos')),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Registrar consumo'),
+        content: const Text('¿Deseas marcar el almuerzo de hoy como consumido?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final dailyMealRepo = context.read<DailyMealRepository>();
+              Navigator.pop(context);
+              setState(() => _loading = true);
+              try {
+                final dateStr = DateTime.now().toIso8601String().split('T').first;
+                await dailyMealRepo.registerMeal(
+                  subscriptionId: subId!,
+                  date: dateStr,
+                  status: 'consumed',
+                  validationMethod: 'manual',
+                );
+                if (mounted) {
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Consumo registrado correctamente')),
+                  );
+                  _loadMeals();
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _loading = false);
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Error al registrar consumo')),
+                  );
+                }
+              }
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _statusLabel(String s) {
+    switch (s) {
+      case 'consumed': return 'Consumido';
+      case 'not_consumed': return 'No consumido';
+      case 'absent': return 'No consumido';
+      case 'justified': return 'Justificado';
+      case 'adjusted': return 'Ajustado';
+      default: return s;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final now = DateTime.now();
+    final isStudent = context.watch<AuthProvider>().isStudent;
 
     return Scaffold(
       appBar: AppBar(
@@ -62,29 +254,55 @@ class _MealCalendarScreenState extends State<MealCalendarScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1,
-                mainAxisSpacing: 4,
-                crossAxisSpacing: 4,
-              ),
-              itemCount: _daysInMonth(_currentMonth),
-              itemBuilder: (_, i) {
-                final day = i + 1;
-                final date = DateTime(_currentMonth.year, _currentMonth.month, day);
-                final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
-                final isPast = date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_error!, style: textTheme.bodyLarge),
+                            const SizedBox(height: 12),
+                            FilledButton.tonal(onPressed: _loadMeals, child: const Text('Reintentar')),
+                          ],
+                        ),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          childAspectRatio: 1,
+                          mainAxisSpacing: 4,
+                          crossAxisSpacing: 4,
+                        ),
+                        itemCount: _daysInMonth(_currentMonth),
+                        itemBuilder: (_, i) {
+                          final day = i + 1;
+                          final date = DateTime(_currentMonth.year, _currentMonth.month, day);
+                          final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
+                          final isPast = date.isBefore(DateTime(now.year, now.month, now.day));
 
-                return _DayCell(
-                  day: day,
-                  isToday: isToday,
-                  isPast: isPast,
-                  status: isPast ? (day % 3 == 0 ? 'consumed' : (day % 5 == 0 ? 'absent' : null)) : null,
-                );
-              },
-            ),
+                          final meal = _getMealForDay(day);
+                          final status = meal?.status;
+
+                          VoidCallback? cellOnTap;
+                          if (isStudent) {
+                            if (meal != null) {
+                              cellOnTap = () => _showAdjustmentDialog(context, meal);
+                            } else if (isToday) {
+                              cellOnTap = () => _showRegisterTodayDialog();
+                            }
+                          }
+
+                          return _DayCell(
+                            day: day,
+                            isToday: isToday,
+                            isPast: isPast,
+                            status: status,
+                            onTap: cellOnTap,
+                          );
+                        },
+                      ),
           ),
           Container(
             padding: const EdgeInsets.all(16),
@@ -92,12 +310,13 @@ class _MealCalendarScreenState extends State<MealCalendarScreen> {
               color: colorScheme.surfaceContainerLow,
               border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
             ),
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _LegendItem(color: Colors.green, label: 'Consumido'),
                 _LegendItem(color: Colors.red, label: 'No consumido'),
                 _LegendItem(color: Colors.orange, label: 'Justificado'),
+                _LegendItem(color: Colors.blue, label: 'Ajustado'),
               ],
             ),
           ),
@@ -116,8 +335,9 @@ class _DayCell extends StatelessWidget {
   final bool isToday;
   final bool isPast;
   final String? status;
+  final VoidCallback? onTap;
 
-  const _DayCell({required this.day, required this.isToday, required this.isPast, this.status});
+  const _DayCell({required this.day, required this.isToday, required this.isPast, this.status, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -125,9 +345,11 @@ class _DayCell extends StatelessWidget {
 
     Color? bgColor;
     if (status == 'consumed') bgColor = Colors.green.withValues(alpha: 0.2);
-    if (status == 'absent') bgColor = Colors.red.withValues(alpha: 0.2);
+    if (status == 'not_consumed' || status == 'absent') bgColor = Colors.red.withValues(alpha: 0.2);
+    if (status == 'justified') bgColor = Colors.orange.withValues(alpha: 0.2);
+    if (status == 'adjusted') bgColor = Colors.blue.withValues(alpha: 0.2);
 
-    return Container(
+    final child = Container(
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
@@ -143,6 +365,16 @@ class _DayCell extends StatelessWidget {
         ),
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: child,
+      );
+    }
+
+    return child;
   }
 }
 

@@ -5,6 +5,8 @@ import './repositories/repositories.dart';
 class ServiceLocator {
   final ApiClient apiClient;
 
+  late final UserRepository userRepository;
+  late final MealPlanRepository mealPlanRepository;
   late final SubscriptionRepository subscriptionRepository;
   late final DailyMealRepository dailyMealRepository;
   late final PaymentRepository paymentRepository;
@@ -20,6 +22,8 @@ class ServiceLocator {
   }
 
   void _init() {
+    final userRemote = UserRemoteSource(apiClient);
+    final mealPlanRemote = MealPlanRemoteSource(apiClient);
     final subscriptionRemote = SubscriptionRemoteSource(apiClient);
     final dailyMealRemote = DailyMealRemoteSource(apiClient);
     final paymentRemote = PaymentRemoteSource(apiClient);
@@ -29,6 +33,8 @@ class ServiceLocator {
     final dashboardRemote = DashboardRemoteSource(apiClient);
     final qrRemote = QrRemoteSource(apiClient);
 
+    userRepository = UserRepository(userRemote);
+    mealPlanRepository = MealPlanRepository(mealPlanRemote);
     subscriptionRepository = SubscriptionRepository(subscriptionRemote);
     dailyMealRepository = DailyMealRepository(dailyMealRemote);
     paymentRepository = PaymentRepository(paymentRemote);

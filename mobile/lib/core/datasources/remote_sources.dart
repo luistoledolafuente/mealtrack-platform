@@ -2,6 +2,46 @@ import '../../core/network/api_client.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/models/models.dart';
 
+class UserRemoteSource {
+  final ApiClient _api;
+
+  UserRemoteSource(this._api);
+
+  Future<Map<String, dynamic>> createUser({
+    required String fullName,
+    required String email,
+    String? phone,
+    String? password,
+    String? role,
+    String? planId,
+  }) async {
+    final res = await _api.post(ApiConstants.createUser, body: {
+      'fullName': fullName,
+      'email': email,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      if (password != null) 'password': password,
+      if (role != null) 'role': role,
+      if (planId != null) 'planId': planId,
+    });
+    return res['data'] as Map<String, dynamic>;
+  }
+}
+
+class MealPlanRemoteSource {
+  final ApiClient _api;
+
+  MealPlanRemoteSource(this._api);
+
+  Future<List<MealPlanModel>> getMealPlans() async {
+    final res = await _api.get(ApiConstants.mealPlans);
+    final data = res['data'];
+    if (data is List) {
+      return data.map((e) => MealPlanModel.fromJson(e)).toList();
+    }
+    return [];
+  }
+}
+
 class SubscriptionRemoteSource {
   final ApiClient _api;
 
@@ -42,9 +82,9 @@ class DailyMealRemoteSource {
   }) async {
     await _api.post(ApiConstants.dailyMeals, body: {
       'subscriptionId': subscriptionId,
-      'date': date,
+      'mealDate': date,
       'status': status,
-      'validationMethod': validationMethod,
+      'validationSource': validationMethod,
     });
   }
 }
@@ -108,6 +148,17 @@ class AdjustmentRemoteSource {
     await _api.post(ApiConstants.adjustmentRequests, body: {
       'dailyMealId': dailyMealId,
       'reason': reason,
+    });
+  }
+
+  Future<void> reviewAdjustment({
+    required String id,
+    required String decision,
+    String? resolutionNotes,
+  }) async {
+    await _api.patch('${ApiConstants.adjustmentRequests}/$id/review', body: {
+      'decision': decision,
+      if (resolutionNotes != null) 'resolutionNotes': resolutionNotes,
     });
   }
 }

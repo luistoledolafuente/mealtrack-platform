@@ -187,9 +187,25 @@ class _SubscriptionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text('${subscription.contractedDays} días contratados', style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
-            )),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('${subscription.contractedDays} días contratados', style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                )),
+                ElevatedButton.icon(
+                  onPressed: () => context.push('${RouteNames.qrIssuePath}?subId=${subscription.id}'),
+                  icon: const Icon(Icons.qr_code_rounded, size: 18),
+                  label: const Text('Mi QR'),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: colorScheme.primary,
+                    backgroundColor: colorScheme.surface,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -210,6 +226,7 @@ class _TodayMealCard extends StatelessWidget {
     final statusColor = todayMeal?.status == 'consumed' ? Colors.green
         : todayMeal?.status == 'justified' ? Colors.orange
         : todayMeal?.status == 'not_consumed' ? Colors.red
+        : todayMeal?.status == 'adjusted' ? Colors.blue
         : colorScheme.primary;
 
     return Card(
@@ -261,6 +278,7 @@ class _TodayMealCard extends StatelessWidget {
       case 'not_consumed': return 'No consumido';
       case 'justified': return 'Justificado';
       case 'pending': return 'Pendiente';
+      case 'adjusted': return 'Ajustado';
       default: return s;
     }
   }
@@ -272,7 +290,7 @@ class _QuickActionsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
+    const items = [
       _ActionItem(icon: Icons.calendar_month_rounded, label: 'Calendario', route: RouteNames.mealCalendarPath),
       _ActionItem(icon: Icons.receipt_rounded, label: 'Suscripciones', route: RouteNames.subscriptionsPath),
       _ActionItem(icon: Icons.payments_rounded, label: 'Pagos', route: RouteNames.paymentsPath),
@@ -328,6 +346,7 @@ class _MealRow extends StatelessWidget {
     final color = meal.status == 'consumed' ? Colors.green
         : meal.status == 'justified' ? Colors.orange
         : meal.status == 'not_consumed' ? Colors.red
+        : meal.status == 'adjusted' ? Colors.blue
         : Colors.grey;
 
     return Card(
@@ -354,6 +373,7 @@ class _MealRow extends StatelessWidget {
       case 'consumed': return 'Consumido';
       case 'not_consumed': return 'No consumido';
       case 'justified': return 'Justificado';
+      case 'adjusted': return 'Ajustado';
       default: return s;
     }
   }

@@ -56,10 +56,10 @@ class _QrValidateScreenState extends State<QrValidateScreen> {
             const SizedBox(height: 24),
             TextField(
               controller: _controller,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Código QR',
-                prefixIcon: const Icon(Icons.qr_code_rounded),
-                border: const OutlineInputBorder(),
+                prefixIcon: Icon(Icons.qr_code_rounded),
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
