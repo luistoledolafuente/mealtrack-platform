@@ -52,3 +52,4 @@ mobile/.flutter-plugins-dependencies
 # Flutter environment
 mobile/.env
 mobile/.env.local
+.env.vps

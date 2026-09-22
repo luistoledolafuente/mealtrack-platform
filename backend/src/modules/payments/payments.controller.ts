@@ -13,7 +13,7 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const payment = await service.getById(req.params.id);
+    const payment = await service.getById(req.params.id, req.user!.id, req.user!.role, req.tenantId);
     sendSuccess(res, payment);
   } catch (err) {
     next(err);

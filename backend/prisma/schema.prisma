@@ -28,6 +28,11 @@ model User {
   reviewedAdjustments  AdjustmentRequest[] @relation("AdjustmentReviewer")
   notifications Notification[]
   auditLogs     AuditLog[]
+  issuedQrSessions QrSession[] @relation("QrSessionIssuer")
+  absenceNoticesForStudent AbsenceNotice[] @relation("AbsenceNoticeStudent")
+  absenceNoticesCreated AbsenceNotice[] @relation("AbsenceNoticeCreator")
+  absenceNoticesReviewed AbsenceNotice[] @relation("AbsenceNoticeReviewer")
+  operationalClosuresCreated OperationalClosure[]
 
   @@map("users")
 }
@@ -45,6 +50,8 @@ model Restaurant {
   mealPlans     MealPlan[]
   subscriptions Subscription[]
   payments      Payment[]
+  qrSessions    QrSession[]
+  operationalClosures OperationalClosure[]
 
   @@map("restaurants")
 }
@@ -83,6 +90,7 @@ model Subscription {
   restaurant Restaurant   @relation(fields: [restaurantId], references: [id])
   dailyMeals DailyMeal[]
   payments   Payment[]
+  absenceNotices AbsenceNotice[]
 
   @@map("subscriptions")
 }
@@ -95,6 +103,7 @@ model DailyMeal {
   status           String   // consumed | not_consumed | justified | pending | adjusted
   registeredBy     String
   validationMethod String?
+  idempotencyKey   String?  @unique
   syncStatus       String   @default("synced")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -105,6 +114,59 @@ model DailyMeal {
 
   @@unique([subscriptionId, studentId, date])
   @@map("daily_meals")
+}
+
+model QrSession {
+  id String @id @default(uuid())
+  restaurantId String
+  service String
+  tokenHash String @unique
+  codeHash String @unique
+  expiresAt DateTime
+  issuedById String
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  issuedBy User @relation("QrSessionIssuer", fields: [issuedById], references: [id])
+  @@index([restaurantId, service, expiresAt])
+  @@map("qr_sessions")
+}
+
+model AbsenceNotice {
+  id String @id @default(uuid())
+  subscriptionId String
+  studentId String
+  date DateTime @db.Date
+  service String
+  reason String
+  status String @default("pending")
+  createdById String
+  reviewerId String?
+  resolution String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+  student User @relation("AbsenceNoticeStudent", fields: [studentId], references: [id])
+  createdBy User @relation("AbsenceNoticeCreator", fields: [createdById], references: [id])
+  reviewer User? @relation("AbsenceNoticeReviewer", fields: [reviewerId], references: [id])
+  @@unique([subscriptionId, date, service])
+  @@map("absence_notices")
+}
+
+model OperationalClosure {
+  id String @id @default(uuid())
+  restaurantId String
+  startDate DateTime @db.Date
+  endDate DateTime @db.Date
+  services String[]
+  reason String
+  createdById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  createdBy User @relation(fields: [createdById], references: [id])
+  @@index([restaurantId, startDate, endDate])
+  @@map("operational_closures")
 }
 
 model AdjustmentRequest {

@@ -10,16 +10,19 @@ MealTrack es una plataforma mobile-first para gestionar pensiones alimentarias e
 
 **Actores:** Estudiante | Admin de restaurante | Superadmin
 
-**Estado actual:** Planificación y documentación (pre-implementación).
+**Estado actual:** MVP de Pensiones para almuerzo implementado y en preparación
+para despliegue de piloto en VPS.
 
 **Stack definido:**
 - Frontend móvil: Flutter (ADR-0001)
 - Backend API: Node.js + Express (ADR-0002)
-- Base de datos: PostgreSQL sobre Supabase (ADR-0003)
+- Base de datos: PostgreSQL con Prisma; el piloto usa PostgreSQL en Docker del VPS
 - Estrategia de datos: Offline-first en móvil (ADR-0004)
 - Multi-tenancy: Lógico por restaurante (ADR-0006)
 
-**MVP:** Autenticación, roles, suscripciones, calendario de consumo, saldo de días, vencimientos, notificaciones básicas, dashboard admin, sincronización inicial.
+**MVP:** Autenticación, roles, suscripciones, QR dinámico de almuerzo, consumo
+idempotente, saldo de días, ausencias, cierres operativos, ajustes, auditoría,
+notificaciones básicas y dashboard admin.
 
 **Versión Pro (+):** Validación QR, reportes financieros, auditoría completa, flujo de ajustes, multi-restaurante, panel web admin.
 
@@ -48,8 +51,8 @@ mealtrack-platform/
 │       ├── ADR-0004.md    # Offline-first
 │       ├── ADR-0005.md    # No edición histórica directa
 │       └── ADR-0006.md    # Multi-tenant por restaurante
-├── backend/               # TODO: proyecto Node.js + Express
-├── mobile/                # TODO: proyecto Flutter
+├── backend/               # API Node.js + Express + Prisma
+├── mobile/                # Aplicación Flutter
 └── web-admin/             # TODO: futuro panel web
 ```
 
@@ -57,11 +60,9 @@ mealtrack-platform/
 
 ## Build & Development Commands
 
-**TODO** — Aún no hay comandos configurados. Se agregarán cuando existan los proyectos `backend/` y `mobile/`.
-
-Previsión:
-- Backend: `npm run dev`, `npm run lint`, `npm test`
+- Backend: `npm run dev`, `npm run build`, `npm run lint`, `npm test`
 - Mobile: `flutter run`, `flutter test`, `flutter analyze`
+- VPS: `docker compose --env-file .env.vps -f docker-compose.vps.yml up -d --build`
 
 ---
 
@@ -94,7 +95,7 @@ Previsión:
 |---|---|---|
 | Cliente móvil | Flutter | UI, almacenamiento local, cola de sync |
 | Backend API | Node.js + Express | Endpoints, reglas de negocio, auditoría |
-| Base de datos | PostgreSQL (Supabase) | Persistencia, RLS multi-tenant |
+| Base de datos | PostgreSQL | Persistencia y aislamiento lógico por restaurante |
 | Web admin | Futuro | Dashboards y operación |
 
 ### Flujo offline-first

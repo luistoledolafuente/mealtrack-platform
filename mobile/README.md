@@ -44,9 +44,30 @@ Cada feature se organiza en: `data/` → `domain/` → `presentation/` → `widg
 | admin_dashboard | Dashboard operativo |
 | audit | Visualización de auditoría |
 
-## Offline-first
+## Compilación y Entornos
 
-- Los datos se guardan localmente primero
-- Las acciones se encolan en SyncQueue
-- Los repositorios coordinan fuente local y remota
-- IDs UUID generados en cliente
+### Desarrollo Local (Debug)
+
+Por defecto, la app apunta a `http://10.0.2.2:3000/api/v1` (Android Emulator):
+
+```bash
+flutter run
+```
+
+### VPS de prueba (Release interno)
+
+Para compilar un APK interno contra la API HTTPS del VPS:
+
+```bash
+flutter build apk --release --dart-define=API_BASE_URL=https://api.example.com/api/v1
+```
+
+> **Nota de Seguridad:** En construcciones Release (`--release`), el tráfico HTTP sin cifrar (`http://`) está totalmente prohibido a nivel de código Dart y manifiesto Android. Solo se permiten conexiones HTTPS.
+
+### Pendientes para Distribución Externa (Producción)
+
+Para una distribución externa pública o de producción (Google Play / App Store), se requiere:
+
+1. **`applicationId` definitivo:** Reemplazar `com.example.mealtrack` en `android/app/build.gradle.kts` por el identificador de paquete oficial (ej. `com.mealtrack.app`).
+2. **Keystore de Producción:** Generar una llave privada de firma Java KeyStore (`key.jks`) almacenada de forma segura (fuera de Git).
+3. **Configuración de Firma Release en Gradle:** Configurar `signingConfigs` en `android/app/build.gradle.kts` con variables de entorno o `key.properties` para firmar el APK/AAB de producción.

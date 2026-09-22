@@ -5,9 +5,12 @@ export async function list(restaurantId: string) {
   return repository.findByRestaurant(restaurantId);
 }
 
-export async function getById(id: string) {
+export async function getById(id: string, role?: string, restaurantId?: string | null) {
   const plan = await repository.findById(id);
   if (!plan) {
+    throw new ApiError('Plan de comida no encontrado', 404, 'MEAL_PLAN_NOT_FOUND');
+  }
+  if (role === 'student' || (role === 'admin' && plan.restaurantId !== restaurantId)) {
     throw new ApiError('Plan de comida no encontrado', 404, 'MEAL_PLAN_NOT_FOUND');
   }
   return plan;

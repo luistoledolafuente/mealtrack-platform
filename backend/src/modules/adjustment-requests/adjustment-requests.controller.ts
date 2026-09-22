@@ -13,7 +13,7 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
 
 export async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const result = await service.create(req.body, req.user!.id);
+    const result = await service.create(req.body, req.user!.id, req.user!.role, req.tenantId);
     sendCreated(res, result, 'Solicitud de ajuste creada correctamente');
   } catch (err) {
     next(err);

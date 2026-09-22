@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
+import { prisma } from './config/database.js';
 import { tenantContext } from './shared/middleware/tenant.js';
 import { errorHandler } from './shared/middleware/errorHandler.js';
 import routes from './routes/index.js';
@@ -29,6 +30,16 @@ app.use(tenantContext);
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/ready', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch (err) {
+    logger.error({ err }, 'Readiness check failed');
+    res.status(503).json({ status: 'unavailable' });
+  }
 });
 
 // API routes

@@ -1,6 +1,8 @@
 import './network/api_client.dart';
 import './datasources/remote_sources.dart';
 import './repositories/repositories.dart';
+import '../features/pension/data/pension_repository.dart';
+import '../features/qr/data/consumption_repository.dart';
 
 class ServiceLocator {
   final ApiClient apiClient;
@@ -15,6 +17,8 @@ class ServiceLocator {
   late final AuditRepository auditRepository;
   late final DashboardRepository dashboardRepository;
   late final QrRepository qrRepository;
+  late final PensionRepository pensionRepository;
+  late final ConsumptionRepository consumptionRepository;
 
   ServiceLocator({ApiClient? apiClient})
       : apiClient = apiClient ?? ApiClient() {
@@ -32,6 +36,8 @@ class ServiceLocator {
     final auditRemote = AuditRemoteSource(apiClient);
     final dashboardRemote = DashboardRemoteSource(apiClient);
     final qrRemote = QrRemoteSource(apiClient);
+    final pensionRemote = PensionRemoteSource(apiClient);
+    final consumptionRemote = ConsumptionRemoteSource(apiClient);
 
     userRepository = UserRepository(userRemote);
     mealPlanRepository = MealPlanRepository(mealPlanRemote);
@@ -43,5 +49,7 @@ class ServiceLocator {
     auditRepository = AuditRepository(auditRemote);
     dashboardRepository = DashboardRepository(dashboardRemote);
     qrRepository = QrRepository(qrRemote);
+    pensionRepository = PensionRepository(pensionRemote);
+    consumptionRepository = ConsumptionRepository(consumptionRemote);
   }
 }

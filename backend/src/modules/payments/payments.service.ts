@@ -13,9 +13,15 @@ export async function list(userId: string, role: string, restaurantId: string | 
   return [];
 }
 
-export async function getById(id: string) {
+export async function getById(id: string, userId: string, role: string, restaurantId: string | null) {
   const payment = await repository.findById(id);
   if (!payment) {
+    throw new ApiError('Pago no encontrado', 404, 'PAYMENT_NOT_FOUND');
+  }
+  if (role === 'student' && payment.studentId !== userId) {
+    throw new ApiError('Pago no encontrado', 404, 'PAYMENT_NOT_FOUND');
+  }
+  if (role === 'admin' && payment.restaurantId !== restaurantId) {
     throw new ApiError('Pago no encontrado', 404, 'PAYMENT_NOT_FOUND');
   }
   return payment;

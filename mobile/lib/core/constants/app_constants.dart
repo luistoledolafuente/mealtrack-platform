@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class AppConstants {
   AppConstants._();
 
@@ -8,10 +10,18 @@ class AppConstants {
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000/api/v1',
-  );
+  static String get baseUrl {
+    const url = String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'http://10.0.2.2:3000/api/v1',
+    );
+    if (kReleaseMode && url.startsWith('http://')) {
+      throw StateError(
+        'Cleartext HTTP traffic is not permitted in release mode. API_BASE_URL must use HTTPS.',
+      );
+    }
+    return url;
+  }
 
   // Auth
   static const String login = '/auth/login';
@@ -55,6 +65,10 @@ class ApiConstants {
   // QR
   static const String qrIssue = '/qr/issue';
   static const String qrValidate = '/qr/validate';
+
+  // Pension & Consumption
+  static const String pensionSummary = '/subscriptions/me/summary';
+  static const String consumptionScan = '/consumptions/scan';
 }
 
 class StorageKeys {

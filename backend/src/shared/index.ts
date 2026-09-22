@@ -6,5 +6,6 @@ export { validate } from './middleware/validate.js';
 export { errorHandler } from './middleware/errorHandler.js';
 export { sendSuccess, sendCreated } from './utils/response.js';
 export { hashPassword, comparePassword, generateToken } from './utils/crypto.js';
+export { checkLoginRateLimit, resetLoginRateLimit, clearRateLimit } from './utils/rateLimiter.js';
 export { ROLES, SUBSCRIPTION_STATUS, DAILY_MEAL_STATUS, ADJUSTMENT_STATUS, SYNC_STATUS, PAYMENT_METHOD, NOTIFICATION_TYPE } from './types/enums.js';
 export type { Role, SubscriptionStatus, DailyMealStatus, AdjustmentStatus, SyncStatus, PaymentMethod, NotificationType } from './types/enums.js';

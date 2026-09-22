@@ -1,11 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 export function tenantContext(req: Request, _res: Response, next: NextFunction): void {
-  if (req.user?.restaurantId) {
-    req.tenantId = req.user.restaurantId;
-  } else {
-    req.tenantId = req.headers['x-tenant-id'] as string || null;
-  }
+  req.tenantId = req.user?.restaurantId ?? null;
   next();
 }
 

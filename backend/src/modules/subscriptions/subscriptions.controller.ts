@@ -13,8 +13,17 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const subscription = await service.getById(req.params.id);
+    const subscription = await service.getById(req.params.id, req.user!.id, req.user!.role, req.tenantId);
     sendSuccess(res, subscription);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMySummary(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const summary = await service.getMySummary(req.user!.id, req.user!.role, req.tenantId);
+    sendSuccess(res, summary);
   } catch (err) {
     next(err);
   }

@@ -17,7 +17,7 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const plan = await service.getById(req.params.id);
+    const plan = await service.getById(req.params.id, req.user!.role, req.tenantId);
     sendSuccess(res, plan);
   } catch (err) {
     next(err);

@@ -14,6 +14,9 @@ class RouteNames {
   static const String audit = 'audit';
   static const String qrValidate = 'qrValidate';
   static const String qrIssue = 'qrIssue';
+  static const String pensionSummary = 'pensionSummary';
+  static const String studentQrScan = 'studentQrScan';
+  static const String consumptionResult = 'consumptionResult';
 
   static const String loginPath = '/login';
   static const String changePasswordPath = '/change-password';
@@ -28,4 +31,7 @@ class RouteNames {
   static const String auditPath = '/audit';
   static const String qrValidatePath = '/qr/validate';
   static const String qrIssuePath = '/qr/issue';
+  static const String pensionSummaryPath = '/pension/summary';
+  static const String studentQrScanPath = '/student/qr-scan';
+  static const String consumptionResultPath = '/student/qr-result';
 }

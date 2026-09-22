@@ -7,6 +7,7 @@ import * as controller from './subscriptions.controller.js';
 const router = Router();
 
 router.get('/', authenticate, controller.list);
+router.get('/me/summary', authenticate, authorize(ROLES.STUDENT), controller.getMySummary);
 router.get('/:id', authenticate, controller.getById);
 router.post('/', authenticate, authorize(ROLES.ADMIN, ROLES.SUPERADMIN), validate(createSubscriptionSchema), controller.create);
 router.patch('/:id', authenticate, authorize(ROLES.ADMIN, ROLES.SUPERADMIN), validate(updateSubscriptionSchema), controller.update);

@@ -2,9 +2,9 @@
 import * as service from './restaurants.service.js';
 import { sendSuccess, sendCreated } from '../../shared/index.js';
 
-export async function list(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const restaurants = await service.list();
+    const restaurants = await service.list(req.user!.role, req.tenantId);
     sendSuccess(res, restaurants);
   } catch (err) {
     next(err);
@@ -13,7 +13,7 @@ export async function list(_req: Request, res: Response, next: NextFunction): Pr
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const restaurant = await service.getById(req.params.id);
+    const restaurant = await service.getById(req.params.id, req.user!.role, req.tenantId);
     sendSuccess(res, restaurant);
   } catch (err) {
     next(err);

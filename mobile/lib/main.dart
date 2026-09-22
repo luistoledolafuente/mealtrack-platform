@@ -5,6 +5,8 @@ import 'core/locator.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'shared/providers/auth_provider.dart';
+import 'features/pension/application/pension_provider.dart';
+import 'features/qr/application/qr_scan_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +48,14 @@ class _MealTrackAppState extends State<MealTrackApp> {
         Provider.value(value: _locator.auditRepository),
         Provider.value(value: _locator.dashboardRepository),
         Provider.value(value: _locator.qrRepository),
+        Provider.value(value: _locator.pensionRepository),
+        Provider.value(value: _locator.consumptionRepository),
+        ChangeNotifierProvider(
+          create: (context) => PensionProvider(context.read()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => QrScanProvider(context.read()),
+        ),
       ],
       child: MaterialApp.router(
         title: 'MealTrack',

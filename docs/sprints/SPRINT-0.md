@@ -2,13 +2,13 @@
 
 ## Objetivo
 
-Preparar MealTrack para un piloto interno de Pensiones: cerrar accesos cruzados entre restaurantes, establecer una ruta de despliegue reproducible y definir la base de la arquitectura SaaS por tenant.
+Preparar MealTrack para un piloto interno de Pensiones: cerrar accesos cruzados entre restaurantes, establecer una ruta de despliegue reproducible en VPS y definir la base de la arquitectura SaaS por tenant.
 
 No se agregan módulos de ventas, inventario ni funcionalidades comerciales nuevas en este sprint.
 
 ## Resultado esperado
 
-Al cierre del sprint, el equipo podrá desplegar una API de staging en Render con una base de datos de piloto aislada, secretos fuera del repositorio, migraciones de producción, pruebas de permisos y un APK interno que use HTTPS.
+Al cierre del sprint, el equipo podrá desplegar una API de staging en un VPS con PostgreSQL, secretos fuera del repositorio, migraciones versionadas, pruebas de permisos y un APK interno que use HTTPS.
 
 ## Prioridades
 
@@ -26,9 +26,9 @@ Al cierre del sprint, el equipo podrá desplegar una API de staging en Render co
 | ID | Historia | Criterios de aceptación | Responsable sugerido |
 |---|---|---|---|
 | S0-05 | Como equipo, la API falla al arrancar si producción está mal configurada. | Sin secretos débiles por defecto; CORS permitido explícitamente; rate limit de login; logs sin token ni contraseña. | OpenCode, revisión Codex |
-| S0-06 | Como equipo, puedo desplegar staging de forma repetible. | `.env.example`, CI, `render.yaml`, build, `prisma migrate deploy`, `/health` y `/ready` documentados. | OpenCode |
+| S0-06 | Como equipo, puedo desplegar staging de forma repetible. | Compose, CI, variables de entorno, build, `prisma migrate deploy`, `/health` y `/ready` documentados. | OpenCode |
 | S0-07 | Como tester, puedo probar la app contra staging por HTTPS. | URL por `--dart-define`; Android release no permite tráfico HTTP claro; identificador de app y firma de release documentados. | Antigravity |
-| S0-08 | Como startup, puedo evaluar el aislamiento por base independiente sin rehacer el MVP. | ADR aprobado, prototipo de dos tenants aislados y plan de aprovisionamiento/migración por tenant. | Codex |
+| S0-08 | Como startup, puedo evaluar el aislamiento por base independiente sin rehacer el MVP. | ADRs y runbook aprobados; el prototipo de dos tenants aislados pasa a Sprint 1. No bloquea el piloto. | Codex |
 
 ### P2 — Preparación del siguiente sprint
 
@@ -44,7 +44,7 @@ S0-01 + S0-02 ─┬─> S0-03 ─> pruebas de regresión
                ├─> S0-04
                └─> S0-05 ─> S0-06 ─> S0-07 ─> piloto interno
 
-S0-08 corre en paralelo y define el Sprint 1.
+S0-08 corre en paralelo y define el Sprint 1. Ver [ADR-0007](../adrs/ADR-0007-aislamiento-operacional-por-base-de-datos-tenant.md), [ADR-0008](../adrs/ADR-0008-enrutamiento-seguro-y-versionado-esquema-tenant.md) y el [runbook por tenant](../runbooks/base-datos-por-tenant.md).
 ```
 
 ## Definición de listo
@@ -74,4 +74,3 @@ Una historia entra al sprint solo si tiene alcance, archivos o módulos afectado
 - Cobertura de pruebas de autorización en todos los recursos sensibles.
 - Despliegue de staging reproducible desde una rama validada.
 - Restauración de backup ensayada antes de usar datos de piloto.
-

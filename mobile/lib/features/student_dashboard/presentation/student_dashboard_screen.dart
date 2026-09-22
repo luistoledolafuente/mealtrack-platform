@@ -291,10 +291,10 @@ class _QuickActionsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
+      _ActionItem(icon: Icons.qr_code_scanner_rounded, label: 'Escanear QR', route: RouteNames.studentQrScanPath),
+      _ActionItem(icon: Icons.assignment_rounded, label: 'Pensión', route: RouteNames.pensionSummaryPath),
       _ActionItem(icon: Icons.calendar_month_rounded, label: 'Calendario', route: RouteNames.mealCalendarPath),
       _ActionItem(icon: Icons.receipt_rounded, label: 'Suscripciones', route: RouteNames.subscriptionsPath),
-      _ActionItem(icon: Icons.payments_rounded, label: 'Pagos', route: RouteNames.paymentsPath),
-      _ActionItem(icon: Icons.edit_note_rounded, label: 'Ajustes', route: RouteNames.adjustmentsPath),
     ];
 
     return GridView.builder(

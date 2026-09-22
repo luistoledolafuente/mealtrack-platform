@@ -1,9 +1,14 @@
 import * as repository from './auth.repository.js';
 import { comparePassword, generateToken, ApiError } from '../../shared/index.js';
+import { resetLoginRateLimit } from '../../shared/utils/rateLimiter.js';
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string, clientIp: string) {
   const user = await repository.findByEmail(email);
   if (!user) {
+    throw new ApiError('Credenciales inválidas', 401, 'INVALID_CREDENTIALS');
+  }
+
+  if (!user.isActive) {
     throw new ApiError('Credenciales inválidas', 401, 'INVALID_CREDENTIALS');
   }
 
@@ -16,9 +21,12 @@ export async function login(email: string, password: string) {
     id: user.id,
     role: user.role,
     restaurantId: user.restaurantId,
+    mustChangePassword: user.mustChangePassword,
   });
 
-return {
+  resetLoginRateLimit(clientIp, email);
+
+  return {
     accessToken,
     user: {
       id: user.id,

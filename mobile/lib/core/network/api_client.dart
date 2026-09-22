@@ -45,10 +45,15 @@ class ApiClient {
   Future<Map<String, dynamic>> post(
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String>? customHeaders,
   }) async {
+    final headers = Map<String, String>.from(_headers);
+    if (customHeaders != null) {
+      headers.addAll(customHeaders);
+    }
     final response = await _client.post(
       _uri(path),
-      headers: _headers,
+      headers: headers,
       body: body != null ? jsonEncode(body) : null,
     );
     return _handleResponse(response);

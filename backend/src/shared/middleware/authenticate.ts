@@ -7,6 +7,7 @@ export interface JwtPayload {
   id: string;
   role: string;
   restaurantId: string | null;
+  mustChangePassword?: boolean;
 }
 
 declare global {
@@ -27,8 +28,26 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, env.jwt.secret) as JwtPayload;
 
+    // Tenant scope is a property of the signed token.  A caller-controlled
+    // header must never be allowed to select a different restaurant.
+    if ((decoded.role === 'student' || decoded.role === 'admin') && !decoded.restaurantId) {
+      throw new ApiError('Contexto de restaurante requerido', 403, 'TENANT_CONTEXT_REQUIRED');
+    }
+
     req.user = decoded;
-    req.tenantId = decoded.restaurantId ?? req.headers['x-tenant-id'] as string ?? null;
+    req.tenantId = decoded.restaurantId;
+
+    if (decoded.mustChangePassword) {
+      const isPasswordChange = req.method === 'PATCH' && req.path === '/me/password';
+      const isLogout = req.method === 'POST' && req.path === '/logout';
+      if (!isPasswordChange && !isLogout) {
+        throw new ApiError(
+          'Debes cambiar tu contraseña antes de continuar',
+          403,
+          'PASSWORD_CHANGE_REQUIRED',
+        );
+      }
+    }
     next();
   } catch (err) {
     if (err instanceof ApiError) return next(err);

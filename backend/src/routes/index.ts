@@ -11,6 +11,9 @@ import notificationsRoutes from '../modules/notifications/notifications.routes.j
 import dashboardsRoutes from '../modules/dashboards/dashboards.routes.js';
 import auditRoutes from '../modules/audit/audit.routes.js';
 import qrRoutes from '../modules/qr/qr.routes.js';
+import absenceNoticesRoutes from '../modules/absence-notices/absence-notices.routes.js';
+import operationalClosuresRoutes from '../modules/operational-closures/operational-closures.routes.js';
+import consumptionsRoutes from '../modules/consumptions/consumptions.routes.js';
 
 const router = Router();
 
@@ -26,5 +29,8 @@ router.use('/notifications', notificationsRoutes);
 router.use('/dashboards', dashboardsRoutes);
 router.use('/audit-logs', auditRoutes);
 router.use('/qr', qrRoutes);
+router.use('/absence-notices', absenceNoticesRoutes);
+router.use('/operational-closures', operationalClosuresRoutes);
+router.use('/consumptions', consumptionsRoutes);
 
 export default router;

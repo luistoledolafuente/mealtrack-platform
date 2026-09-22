@@ -16,6 +16,9 @@ export async function findMany(filters: {
     if (filters.from) (where.createdAt as Record<string, unknown>).gte = filters.from;
     if (filters.to) (where.createdAt as Record<string, unknown>).lte = filters.to;
   }
+  if (filters.restaurantId) {
+    where.detail = { path: ['restaurantId'], equals: filters.restaurantId };
+  }
 
   const skip = (page - 1) * limit;
 

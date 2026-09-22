@@ -28,7 +28,7 @@ export async function findMany(filters: {
 }
 
 export async function findById(id: string) {
-  return prisma.dailyMeal.findUnique({ where: { id } });
+  return prisma.dailyMeal.findUnique({ where: { id }, include: { subscription: { select: { restaurantId: true } } } });
 }
 
 export async function findBySubscriptionAndDate(subscriptionId: string, studentId: string, date: Date) {

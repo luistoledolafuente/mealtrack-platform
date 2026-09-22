@@ -14,6 +14,8 @@ import '../../features/adjustments/presentation/adjustments_screen.dart';
 import '../../features/audit/presentation/audit_screen.dart';
 import '../../features/qr/presentation/qr_validate_screen.dart';
 import '../../features/qr/presentation/qr_issue_screen.dart';
+import '../../features/pension/presentation/pension_summary_screen.dart';
+import '../../features/qr/presentation/student_qr_scan_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -122,6 +124,16 @@ class AppRouter {
             final subId = state.uri.queryParameters['subId'];
             return QrIssueScreen(subscriptionId: subId);
           },
+        ),
+        GoRoute(
+          name: RouteNames.pensionSummary,
+          path: RouteNames.pensionSummaryPath,
+          builder: (_, __) => const PensionSummaryScreen(),
+        ),
+        GoRoute(
+          name: RouteNames.studentQrScan,
+          path: RouteNames.studentQrScanPath,
+          builder: (_, __) => const StudentQrScanScreen(),
         ),
       ],
     );

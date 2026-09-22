@@ -1,8 +1,9 @@
 import * as repository from './adjustment-requests.repository.js';
 import * as dailyMealRepository from '../daily-meals/daily-meals.repository.js';
 import * as subscriptionRepository from '../subscriptions/subscriptions.repository.js';
-import * as notificationRepository from '../notifications/notifications.repository.js';
+import { prisma } from '../../config/database.js';
 import { ApiError } from '../../shared/index.js';
+import { sanitizeAuditDetail } from '../audit/audit.service.js';
 
 export async function list(userId: string, role: string, restaurantId: string | null) {
   if (role === 'student') {
@@ -17,17 +18,32 @@ export async function list(userId: string, role: string, restaurantId: string | 
 export async function create(data: {
   dailyMealId: string;
   reason: string;
-}, userId: string) {
+}, userId: string, userRole: string, userRestaurantId: string | null) {
   const dailyMeal = await dailyMealRepository.findById(data.dailyMealId);
   if (!dailyMeal) {
     throw new ApiError('Consumo diario no encontrado', 404, 'DAILY_MEAL_NOT_FOUND');
   }
 
-  return repository.create({
+  if (userRole === 'student' && dailyMeal.studentId !== userId) {
+    throw new ApiError('Consumo diario no encontrado', 404, 'DAILY_MEAL_NOT_FOUND');
+  }
+  if (userRole === 'admin' && dailyMeal.subscription?.restaurantId !== userRestaurantId) {
+    throw new ApiError('Consumo diario no encontrado', 404, 'DAILY_MEAL_NOT_FOUND');
+  }
+
+  const adjustment = await repository.create({
     dailyMealId: data.dailyMealId,
     requesterId: userId,
     reason: data.reason,
   });
+  await prisma.auditLog.create({ data: {
+    userId,
+    action: 'CREATE_ADJUSTMENT_REQUEST',
+    entity: 'AdjustmentRequest',
+    entityId: adjustment.id,
+    detail: sanitizeAuditDetail({ restaurantId: dailyMeal.subscription?.restaurantId, correlationId: adjustment.id, dailyMealId: data.dailyMealId }) as never,
+  }});
+  return adjustment;
 }
 
 export async function review(
@@ -45,6 +61,10 @@ export async function review(
     throw new ApiError('Solicitud de ajuste no encontrada', 404, 'ADJUSTMENT_NOT_FOUND');
   }
 
+  if (request.status !== 'pending') {
+    throw new ApiError('La solicitud ya fue revisada', 409, 'ADJUSTMENT_ALREADY_REVIEWED');
+  }
+
   const dailyMeal = await dailyMealRepository.findById(request.dailyMealId);
   if (!dailyMeal) {
     throw new ApiError('Consumo diario asociado no encontrado', 404, 'DAILY_MEAL_NOT_FOUND');
@@ -60,28 +80,40 @@ export async function review(
     throw new ApiError('No autorizado para operar en esta suscripción', 403, 'FORBIDDEN');
   }
 
-  const updated = await repository.review(id, {
-    status: data.decision,
-    reviewerId,
-    resolution: data.resolutionNotes,
-  });
-
-  await notificationRepository.create({
-    userId: request.requesterId,
-    type: 'adjustment',
-    title: data.decision === 'approved' ? 'Solicitud de ajuste aprobada' : 'Solicitud de ajuste rechazada',
-    message: data.decision === 'approved' ? 'Se devolvió el día de consumo a tu suscripción' : 'Tu solicitud de ajuste fue rechazada',
-  });
-
-  if (data.decision === 'approved') {
-    // If the meal was registered as consumed, we refund it
-    if (dailyMeal.status === 'consumed') {
-      await subscriptionRepository.update(dailyMeal.subscriptionId, {
-        remainingDays: subscription.remainingDays + 1,
-      });
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.adjustmentRequest.updateMany({
+      where: { id, status: 'pending' },
+      data: { status: data.decision, reviewerId, resolution: data.resolutionNotes },
+    });
+    if (updated.count !== 1) {
+      throw new ApiError('La solicitud ya fue revisada', 409, 'ADJUSTMENT_ALREADY_REVIEWED');
     }
-    await dailyMealRepository.updateStatus(request.dailyMealId, 'adjusted');
-  }
-
-  return updated;
+    if (data.decision === 'approved') {
+      if (dailyMeal.status === 'consumed') {
+        await tx.subscription.update({
+          where: { id: dailyMeal.subscriptionId },
+          data: { remainingDays: { increment: 1 } },
+        });
+      }
+      await tx.dailyMeal.update({ where: { id: request.dailyMealId }, data: { status: 'adjusted' } });
+    }
+    await tx.notification.create({
+      data: {
+        userId: request.requesterId,
+        type: 'adjustment',
+        title: data.decision === 'approved' ? 'Solicitud de ajuste aprobada' : 'Solicitud de ajuste rechazada',
+        message: data.decision === 'approved' ? 'Se devolvió el día de consumo a tu suscripción' : 'Tu solicitud de ajuste fue rechazada',
+      },
+    });
+    await tx.auditLog.create({ data: {
+      userId: reviewerId,
+      action: 'REVIEW_ADJUSTMENT_REQUEST',
+      entity: 'AdjustmentRequest',
+      entityId: id,
+      detail: sanitizeAuditDetail({ restaurantId: subscription.restaurantId, correlationId: id, decision: data.decision, dailyMealId: request.dailyMealId }) as never,
+    }});
+    const result = await tx.adjustmentRequest.findUnique({ where: { id } });
+    if (!result) throw new ApiError('Solicitud de ajuste no encontrada', 404, 'ADJUSTMENT_NOT_FOUND');
+    return result;
+  });
 }
