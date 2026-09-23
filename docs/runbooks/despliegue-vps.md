@@ -34,8 +34,10 @@ curl --fail http://127.0.0.1:3000/ready
 ```
 
 En `.env.vps`, generar contraseñas diferentes para PostgreSQL y JWT. `JWT_SECRET`
-debe tener al menos 32 caracteres. `CORS_ORIGIN` es el dominio HTTPS exacto de la
-aplicación móvil/web permitida; nunca se usa `*` en producción.
+debe tener al menos 32 caracteres. `CORS_ORIGIN` es el dominio HTTPS exacto del
+panel web permitido; nunca se usa `*` en producción. Para el panel incluido en
+este repositorio, configurar `CORS_ORIGIN=https://mealtrack-admin.example.com`
+y `WEB_ADMIN_API_BASE_URL=https://mealtrack-api.example.com/api/v1`.
 
 ## Proxy HTTPS
 
@@ -70,6 +72,49 @@ curl --fail https://api.example.com/ready
 
 El APK release se compila con
 `--dart-define=API_BASE_URL=https://api.example.com/api/v1`.
+
+## Panel de superadministración
+
+El panel web se sirve internamente en `127.0.0.1:3001`. Crear un subdominio
+separado, por ejemplo `mealtrack-admin.example.com`, que apunte al VPS. No
+reutilizar subdominios de otros proyectos. Publicarlo mediante Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name mealtrack-admin.example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Tras comprobar que el DNS resuelve al VPS, ejecutar `sudo certbot --nginx -d
+mealtrack-admin.example.com`. El panel solo permite iniciar sesión a cuentas
+con rol `superadmin`; gestiona el alta, edición y suspensión de restaurantes.
+
+## Alta inicial del superadmin
+
+No usar `db:seed` en el piloto. Después de que la API y las migraciones estén
+operativas, crear una sola cuenta inicial con valores definidos directamente en
+la terminal del VPS (no se guardan en Git):
+
+```bash
+docker compose --env-file .env.vps -f docker-compose.vps.yml exec \
+  -e SUPERADMIN_NAME='Nombre del operador' \
+  -e SUPERADMIN_EMAIL='operador@ejemplo.com' \
+  -e SUPERADMIN_PASSWORD='una-clave-unica-de-al-menos-16-caracteres' \
+  api npm run db:create-superadmin
+```
+
+El comando falla si ese correo ya existe, cifra la contraseña y registra el
+alta en auditoría. Guardar la contraseña en un gestor de secretos. No pegarla
+en capturas, chat ni archivos `.env`.
 
 ## Actualización y rollback
 

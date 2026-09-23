@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:create-superadmin": "tsx prisma/create-superadmin.ts",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "lint": "eslint src/ tests/",
