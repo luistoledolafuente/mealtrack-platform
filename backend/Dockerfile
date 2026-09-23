@@ -24,4 +24,4 @@ COPY --chown=node:node --from=build /app/prisma ./prisma
 COPY --chown=node:node --from=build /app/dist ./dist
 USER node
 EXPOSE 3000
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/src/server.js"]
