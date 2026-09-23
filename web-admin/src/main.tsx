@@ -60,6 +60,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<Restaurant | null>(null);
+  const [assigningAdmin, setAssigningAdmin] = useState<Restaurant | null>(null);
 
   const filteredRestaurants = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -115,7 +116,8 @@ function App() {
         </section>
       </main>
       {showCreate && <RestaurantDialog title="Crear restaurante" action="Crear restaurante" token={session.token} onClose={() => setShowCreate(false)} onSaved={(restaurant) => { setRestaurants((current) => [...current, restaurant].sort((a, b) => a.name.localeCompare(b.name))); setShowCreate(false); }} />}
-      {editing && <RestaurantDialog title="Editar restaurante" action="Guardar cambios" token={session.token} restaurant={editing} onClose={() => setEditing(null)} onSaved={(restaurant) => { setRestaurants((current) => current.map((item) => item.id === restaurant.id ? restaurant : item)); setEditing(null); }} />}
+      {editing && <RestaurantDialog title="Editar restaurante" action="Guardar cambios" token={session.token} restaurant={editing} onClose={() => setEditing(null)} onCreateAdmin={(restaurant) => { setEditing(null); setAssigningAdmin(restaurant); }} onSaved={(restaurant) => { setRestaurants((current) => current.map((item) => item.id === restaurant.id ? restaurant : item)); setEditing(null); }} />}
+      {assigningAdmin && <AdminDialog restaurant={assigningAdmin} token={session.token} onClose={() => setAssigningAdmin(null)} />}
     </div>
   );
 }
@@ -154,7 +156,7 @@ function RestaurantTable({ restaurants, onEdit }: { restaurants: Restaurant[]; o
   return <div className="table-wrap"><table><thead><tr><th>Restaurante</th><th>Dirección</th><th>Estado</th><th>Creado</th><th><span className="sr-only">Acciones</span></th></tr></thead><tbody>{restaurants.map((restaurant) => <tr key={restaurant.id}><td><strong>{restaurant.name}</strong><small>{restaurant.id}</small></td><td>{restaurant.address || 'Sin dirección registrada'}</td><td><span className={`status ${restaurant.isActive ? 'active' : 'inactive'}`}>{restaurant.isActive ? 'Operativo' : 'Suspendido'}</span></td><td>{new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium' }).format(new Date(restaurant.createdAt))}</td><td><button className="button secondary small" onClick={() => onEdit(restaurant)}>Gestionar</button></td></tr>)}</tbody></table></div>;
 }
 
-function RestaurantDialog({ title, action, token, restaurant, onClose, onSaved }: { title: string; action: string; token: string; restaurant?: Restaurant; onClose: () => void; onSaved: (restaurant: Restaurant) => void }) {
+function RestaurantDialog({ title, action, token, restaurant, onClose, onCreateAdmin, onSaved }: { title: string; action: string; token: string; restaurant?: Restaurant; onClose: () => void; onCreateAdmin?: (restaurant: Restaurant) => void; onSaved: (restaurant: Restaurant) => void }) {
   const [name, setName] = useState(restaurant?.name || '');
   const [address, setAddress] = useState(restaurant?.address || '');
   const [isActive, setIsActive] = useState(restaurant?.isActive ?? true);
@@ -174,7 +176,31 @@ function RestaurantDialog({ title, action, token, restaurant, onClose, onSaved }
       setSaving(false);
     }
   };
-  return <div className="modal-backdrop" role="presentation"><section className="modal" role="dialog" aria-modal="true" aria-labelledby="restaurant-dialog-title"><div className="modal-head"><div><p className="eyebrow">Directorio operativo</p><h2 id="restaurant-dialog-title">{title}</h2></div><button className="close" aria-label="Cerrar" onClick={onClose}>×</button></div><form onSubmit={save}><label>Nombre del restaurante<input required maxLength={200} value={name} onChange={(event) => setName(event.target.value)} /></label><label>Dirección<input maxLength={300} value={address} onChange={(event) => setAddress(event.target.value)} /></label>{restaurant && <label className="toggle"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span>Restaurante operativo</span></label>}{error && <p className="form-error" role="alert">{error}</p>}<div className="modal-actions"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button className="button primary" disabled={saving}>{saving ? 'Guardando…' : action}</button></div></form></section></div>;
+  return <div className="modal-backdrop" role="presentation"><section className="modal" role="dialog" aria-modal="true" aria-labelledby="restaurant-dialog-title"><div className="modal-head"><div><p className="eyebrow">Directorio operativo</p><h2 id="restaurant-dialog-title">{title}</h2></div><button className="close" aria-label="Cerrar" onClick={onClose}>×</button></div><form onSubmit={save}><label>Nombre del restaurante<input required maxLength={200} value={name} onChange={(event) => setName(event.target.value)} /></label><label>Dirección<input maxLength={300} value={address} onChange={(event) => setAddress(event.target.value)} /></label>{restaurant && <label className="toggle"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span>Restaurante operativo</span></label>}{error && <p className="form-error" role="alert">{error}</p>}<div className="modal-actions">{restaurant && onCreateAdmin && <button type="button" className="button secondary" onClick={() => onCreateAdmin(restaurant)}>Crear administrador</button>}<button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button className="button primary" disabled={saving}>{saving ? 'Guardando…' : action}</button></div></form></section></div>;
+}
+
+function AdminDialog({ restaurant, token, onClose }: { restaurant: Restaurant; token: string; onClose: () => void }) {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      const created = await request<{ temporaryPassword?: string }>('/users', { method: 'POST', body: JSON.stringify({ fullName, email, phone: phone || undefined, role: 'admin', restaurantId: restaurant.id }) }, token);
+      setTemporaryPassword(created.temporaryPassword || null);
+    } catch (caught) {
+      setError((caught as ApiError).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+  if (temporaryPassword) return <div className="modal-backdrop" role="presentation"><section className="modal" role="dialog" aria-modal="true" aria-labelledby="temporary-password-title"><div className="modal-head"><div><p className="eyebrow">Administrador creado</p><h2 id="temporary-password-title">Guarda este acceso ahora</h2></div><button className="close" aria-label="Cerrar" onClick={onClose}>×</button></div><p className="muted">Esta contraseña temporal se muestra una sola vez. El administrador tendrá que cambiarla al iniciar sesión.</p><div className="credential"><span>Contraseña temporal</span><code>{temporaryPassword}</code></div><div className="modal-actions"><button className="button primary" onClick={onClose}>Entendido, ya la guardé</button></div></section></div>;
+  return <div className="modal-backdrop" role="presentation"><section className="modal" role="dialog" aria-modal="true" aria-labelledby="admin-dialog-title"><div className="modal-head"><div><p className="eyebrow">{restaurant.name}</p><h2 id="admin-dialog-title">Crear administrador</h2></div><button className="close" aria-label="Cerrar" onClick={onClose}>×</button></div><p className="muted">Se generará una contraseña temporal y se exigirá cambiarla al primer inicio de sesión.</p><form onSubmit={save}><label>Nombre completo<input required maxLength={150} value={fullName} onChange={(event) => setFullName(event.target.value)} /></label><label>Correo<input required type="email" maxLength={200} value={email} onChange={(event) => setEmail(event.target.value)} /></label><label>Teléfono <span className="optional">opcional</span><input maxLength={30} value={phone} onChange={(event) => setPhone(event.target.value)} /></label>{error && <p className="form-error" role="alert">{error}</p>}<div className="modal-actions"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button className="button primary" disabled={saving}>{saving ? 'Creando…' : 'Crear administrador'}</button></div></form></section></div>;
 }
 
 function initials(name: string): string {
