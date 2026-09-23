@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -26,7 +26,7 @@ async function main() {
     data: {
       fullName,
       email,
-      passwordHash: await hash(password, 12),
+      passwordHash: await bcrypt.hash(password, 12),
       role: 'superadmin',
       isActive: true,
       mustChangePassword: false,
