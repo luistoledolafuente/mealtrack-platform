@@ -75,7 +75,7 @@ El APK release se compila con
 
 ## Panel de superadministración
 
-El panel web se sirve internamente en `127.0.0.1:3001`. Crear un subdominio
+El panel web se sirve internamente en `127.0.0.1:3101`. Crear un subdominio
 separado, por ejemplo `mealtrack-admin.example.com`, que apunte al VPS. No
 reutilizar subdominios de otros proyectos. Publicarlo mediante Nginx:
 
@@ -85,7 +85,7 @@ server {
     server_name mealtrack-admin.example.com;
 
     location / {
-        proxy_pass http://127.0.0.1:3001;
+        proxy_pass http://127.0.0.1:3101;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
