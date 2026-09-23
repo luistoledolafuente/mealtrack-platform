@@ -4,6 +4,8 @@ import '../constants/app_constants.dart';
 import 'api_exceptions.dart';
 
 class ApiClient {
+  static const _requestTimeout = Duration(seconds: 15);
+
   final http.Client _client;
   String? _accessToken;
 
@@ -35,10 +37,12 @@ class ApiClient {
     String path, {
     Map<String, String>? queryParams,
   }) async {
-    final response = await _client.get(
-      _uri(path, queryParams: queryParams),
-      headers: _headers,
-    );
+    final response = await _client
+        .get(
+          _uri(path, queryParams: queryParams),
+          headers: _headers,
+        )
+        .timeout(_requestTimeout);
     return _handleResponse(response);
   }
 
@@ -51,11 +55,13 @@ class ApiClient {
     if (customHeaders != null) {
       headers.addAll(customHeaders);
     }
-    final response = await _client.post(
-      _uri(path),
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await _client
+        .post(
+          _uri(path),
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(_requestTimeout);
     return _handleResponse(response);
   }
 
@@ -63,11 +69,13 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    final response = await _client.patch(
-      _uri(path),
-      headers: _headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await _client
+        .patch(
+          _uri(path),
+          headers: _headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(_requestTimeout);
     return _handleResponse(response);
   }
 
