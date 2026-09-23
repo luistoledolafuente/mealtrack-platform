@@ -62,6 +62,7 @@ class _MealTrackAppState extends State<MealTrackApp> {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.system,
         routerConfig: _router,
       ),
     );

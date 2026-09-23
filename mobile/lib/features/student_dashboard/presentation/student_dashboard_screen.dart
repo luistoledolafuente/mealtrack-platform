@@ -5,6 +5,7 @@ import '../../../core/models/models.dart';
 import '../../../core/repositories/repositories.dart';
 import '../../../core/routes/route_names.dart';
 import '../../../shared/providers/auth_provider.dart';
+import '../../../shared/widgets/animated_reveal.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -25,13 +26,26 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final repo = context.read<DashboardRepository>();
       final data = await repo.getStudentDashboard();
-      if (mounted) setState(() { _dashboard = data; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _dashboard = data;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() { _error = 'Error al cargar datos'; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _error = 'Error al cargar datos';
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -54,9 +68,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(
+                          color: Colors.red, shape: BoxShape.circle),
                       child: Text('${_dashboard!.pendingNotifications}',
-                          style: const TextStyle(fontSize: 10, color: Colors.white)),
+                          style: const TextStyle(
+                              fontSize: 10, color: Colors.white)),
                     ),
                   ),
               ],
@@ -78,7 +94,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     children: [
                       Text(_error!, style: textTheme.bodyLarge),
                       const SizedBox(height: 12),
-                      FilledButton.tonal(onPressed: _load, child: const Text('Reintentar')),
+                      FilledButton.tonal(
+                          onPressed: _load, child: const Text('Reintentar')),
                     ],
                   ),
                 )
@@ -86,31 +103,39 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   onRefresh: _load,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (_dashboard!.activeSubscription != null)
-                          _SubscriptionCard(
+                          AnimatedReveal(
+                              child: _SubscriptionCard(
                             subscription: _dashboard!.activeSubscription!,
                             colorScheme: colorScheme,
                             textTheme: textTheme,
-                          ),
-                        if (_dashboard!.activeSubscription != null) const SizedBox(height: 24),
-                        _TodayMealCard(
-                          todayMeal: _dashboard!.todayMeal,
-                          colorScheme: colorScheme,
-                          textTheme: textTheme,
-                        ),
+                          )),
+                        if (_dashboard!.activeSubscription != null)
+                          const SizedBox(height: 24),
+                        AnimatedReveal(
+                            delay: const Duration(milliseconds: 60),
+                            child: _TodayMealCard(
+                              todayMeal: _dashboard!.todayMeal,
+                              colorScheme: colorScheme,
+                              textTheme: textTheme,
+                            )),
                         const SizedBox(height: 24),
-                        Text('Acceso rápido', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        Text('Acceso rápido', style: textTheme.titleLarge),
                         const SizedBox(height: 12),
-                        _QuickActionsGrid(colorScheme: colorScheme),
+                        const AnimatedReveal(
+                            delay: Duration(milliseconds: 120),
+                            child: _QuickActionsGrid()),
                         const SizedBox(height: 24),
                         if (_dashboard!.recentMeals.isNotEmpty) ...[
-                          Text('Consumos recientes', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                          Text('Consumos recientes',
+                              style: textTheme.titleLarge),
                           const SizedBox(height: 12),
-                          ..._dashboard!.recentMeals.take(5).map((m) => _MealRow(meal: m, colorScheme: colorScheme)),
+                          ..._dashboard!.recentMeals.take(5).map((m) =>
+                              _MealRow(meal: m, colorScheme: colorScheme)),
                         ],
                       ],
                     ),
@@ -125,7 +150,10 @@ class _SubscriptionCard extends StatelessWidget {
   final ColorScheme colorScheme;
   final TextTheme textTheme;
 
-  const _SubscriptionCard({required this.subscription, required this.colorScheme, required this.textTheme});
+  const _SubscriptionCard(
+      {required this.subscription,
+      required this.colorScheme,
+      required this.textTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -140,9 +168,12 @@ class _SubscriptionCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.receipt_long_rounded, color: colorScheme.onPrimaryContainer),
+                Icon(Icons.receipt_long_rounded,
+                    color: colorScheme.onPrimaryContainer),
                 const SizedBox(width: 8),
-                Text('Suscripción activa', style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimaryContainer)),
+                Text('Suscripción activa',
+                    style: textTheme.labelLarge
+                        ?.copyWith(color: colorScheme.onPrimaryContainer)),
               ],
             ),
             const SizedBox(height: 16),
@@ -152,27 +183,32 @@ class _SubscriptionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${subscription.remainingDays} días restantes', style: textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onPrimaryContainer,
-                      )),
+                      Text('${subscription.remainingDays} días restantes',
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimaryContainer,
+                          )),
                       const SizedBox(height: 4),
-                      Text(subscription.mealPlanName, style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                      )),
+                      Text(subscription.mealPlanName,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onPrimaryContainer
+                                .withValues(alpha: 0.8),
+                          )),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: colorScheme.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('Activo', style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.w600,
-                  )),
+                  child: Text('Activo',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      )),
                 ),
               ],
             ),
@@ -190,18 +226,22 @@ class _SubscriptionCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${subscription.contractedDays} días contratados', style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
-                )),
+                Text('${subscription.contractedDays} días contratados',
+                    style: textTheme.bodySmall?.copyWith(
+                      color:
+                          colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                    )),
                 ElevatedButton.icon(
-                  onPressed: () => context.push('${RouteNames.qrIssuePath}?subId=${subscription.id}'),
+                  onPressed: () => context.push(
+                      '${RouteNames.qrIssuePath}?subId=${subscription.id}'),
                   icon: const Icon(Icons.qr_code_rounded, size: 18),
                   label: const Text('Mi QR'),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: colorScheme.primary,
                     backgroundColor: colorScheme.surface,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   ),
                 ),
               ],
@@ -218,16 +258,21 @@ class _TodayMealCard extends StatelessWidget {
   final ColorScheme colorScheme;
   final TextTheme textTheme;
 
-  const _TodayMealCard({this.todayMeal, required this.colorScheme, required this.textTheme});
+  const _TodayMealCard(
+      {this.todayMeal, required this.colorScheme, required this.textTheme});
 
   @override
   Widget build(BuildContext context) {
     final hasMeal = todayMeal != null;
-    final statusColor = todayMeal?.status == 'consumed' ? Colors.green
-        : todayMeal?.status == 'justified' ? Colors.orange
-        : todayMeal?.status == 'not_consumed' ? Colors.red
-        : todayMeal?.status == 'adjusted' ? Colors.blue
-        : colorScheme.primary;
+    final statusColor = todayMeal?.status == 'consumed'
+        ? Colors.green
+        : todayMeal?.status == 'justified'
+            ? Colors.orange
+            : todayMeal?.status == 'not_consumed'
+                ? Colors.red
+                : todayMeal?.status == 'adjusted'
+                    ? Colors.blue
+                    : colorScheme.primary;
 
     return Card(
       elevation: 0,
@@ -237,9 +282,12 @@ class _TodayMealCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 56, height: 56,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: hasMeal ? statusColor.withValues(alpha: 0.15) : colorScheme.tertiaryContainer,
+                color: hasMeal
+                    ? statusColor.withValues(alpha: 0.15)
+                    : colorScheme.tertiaryContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -252,11 +300,16 @@ class _TodayMealCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Almuerzo de hoy', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  Text('Almuerzo de hoy',
+                      style: textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(
-                    hasMeal ? _statusLabel(todayMeal!.status) : 'No has registrado consumo hoy',
-                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                    hasMeal
+                        ? _statusLabel(todayMeal!.status)
+                        : 'No has registrado consumo hoy',
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -274,42 +327,72 @@ class _TodayMealCard extends StatelessWidget {
 
   String _statusLabel(String s) {
     switch (s) {
-      case 'consumed': return 'Consumido';
-      case 'not_consumed': return 'No consumido';
-      case 'justified': return 'Justificado';
-      case 'pending': return 'Pendiente';
-      case 'adjusted': return 'Ajustado';
-      default: return s;
+      case 'consumed':
+        return 'Consumido';
+      case 'not_consumed':
+        return 'No consumido';
+      case 'justified':
+        return 'Justificado';
+      case 'pending':
+        return 'Pendiente';
+      case 'adjusted':
+        return 'Ajustado';
+      default:
+        return s;
     }
   }
 }
 
 class _QuickActionsGrid extends StatelessWidget {
-  final ColorScheme colorScheme;
-  const _QuickActionsGrid({required this.colorScheme});
+  const _QuickActionsGrid();
 
   @override
   Widget build(BuildContext context) {
     const items = [
-      _ActionItem(icon: Icons.qr_code_scanner_rounded, label: 'Escanear QR', route: RouteNames.studentQrScanPath),
-      _ActionItem(icon: Icons.assignment_rounded, label: 'Pensión', route: RouteNames.pensionSummaryPath),
-      _ActionItem(icon: Icons.calendar_month_rounded, label: 'Calendario', route: RouteNames.mealCalendarPath),
-      _ActionItem(icon: Icons.receipt_rounded, label: 'Suscripciones', route: RouteNames.subscriptionsPath),
+      _ActionItem(
+          icon: Icons.qr_code_scanner_rounded,
+          label: 'Escanear QR',
+          route: RouteNames.studentQrScanPath),
+      _ActionItem(
+          icon: Icons.assignment_rounded,
+          label: 'Pensión',
+          route: RouteNames.pensionSummaryPath),
+      _ActionItem(
+          icon: Icons.calendar_month_rounded,
+          label: 'Calendario',
+          route: RouteNames.mealCalendarPath),
+      _ActionItem(
+          icon: Icons.receipt_rounded,
+          label: 'Suscripciones',
+          route: RouteNames.subscriptionsPath),
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.8),
-      itemCount: items.length,
-      itemBuilder: (_, i) => _ActionChip(item: items[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 560 ? 4 : 2;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: columns == 4 ? 1.1 : 1.45,
+          ),
+          itemCount: items.length,
+          itemBuilder: (_, index) => _ActionChip(item: items[index]),
+        );
+      },
     );
   }
 }
 
 class _ActionItem {
-  final IconData icon; final String label; final String route;
-  const _ActionItem({required this.icon, required this.label, required this.route});
+  final IconData icon;
+  final String label;
+  final String route;
+  const _ActionItem(
+      {required this.icon, required this.label, required this.route});
 }
 
 class _ActionChip extends StatelessWidget {
@@ -318,18 +401,31 @@ class _ActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.push(item.route),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.outlineVariant), borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(item.icon, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 4),
-            Text(item.label, style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.center),
-          ],
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        onTap: () => context.push(item.route),
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(14)),
+                child: Icon(item.icon, color: scheme.onPrimaryContainer),
+              ),
+              const SizedBox(height: 10),
+              Text(item.label,
+                  style: Theme.of(context).textTheme.labelLarge,
+                  textAlign: TextAlign.center,
+                  maxLines: 2),
+            ],
+          ),
         ),
       ),
     );
@@ -343,11 +439,15 @@ class _MealRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = meal.status == 'consumed' ? Colors.green
-        : meal.status == 'justified' ? Colors.orange
-        : meal.status == 'not_consumed' ? Colors.red
-        : meal.status == 'adjusted' ? Colors.blue
-        : Colors.grey;
+    final color = meal.status == 'consumed'
+        ? Colors.green
+        : meal.status == 'justified'
+            ? Colors.orange
+            : meal.status == 'not_consumed'
+                ? Colors.red
+                : meal.status == 'adjusted'
+                    ? Colors.blue
+                    : Colors.grey;
 
     return Card(
       elevation: 0,
@@ -359,9 +459,11 @@ class _MealRow extends StatelessWidget {
           children: [
             Icon(Icons.circle, color: color, size: 10),
             const SizedBox(width: 12),
-            Text('${meal.date.day}/${meal.date.month}/${meal.date.year}', style: Theme.of(context).textTheme.bodyMedium),
+            Text('${meal.date.day}/${meal.date.month}/${meal.date.year}',
+                style: Theme.of(context).textTheme.bodyMedium),
             const Spacer(),
-            Text(_label(meal.status), style: Theme.of(context).textTheme.bodySmall),
+            Text(_label(meal.status),
+                style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),
@@ -370,11 +472,16 @@ class _MealRow extends StatelessWidget {
 
   String _label(String s) {
     switch (s) {
-      case 'consumed': return 'Consumido';
-      case 'not_consumed': return 'No consumido';
-      case 'justified': return 'Justificado';
-      case 'adjusted': return 'Ajustado';
-      default: return s;
+      case 'consumed':
+        return 'Consumido';
+      case 'not_consumed':
+        return 'No consumido';
+      case 'justified':
+        return 'Justificado';
+      case 'adjusted':
+        return 'Ajustado';
+      default:
+        return s;
     }
   }
 }

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/network/api_exceptions.dart';
-import '../../../shared/providers/auth_provider.dart';
 import '../../../core/routes/route_names.dart';
+import '../../../shared/providers/auth_provider.dart';
+import '../../../shared/widgets/animated_reveal.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,139 +28,259 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     setState(() => _errorMessage = null);
-
     try {
       final auth = context.read<AuthProvider>();
-      await auth.login(
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
-      if (!mounted) return;
-      context.go(
-        auth.isStudent ? RouteNames.studentDashboardPath : RouteNames.adminDashboardPath,
-      );
-    } on ApiException catch (e) {
-      setState(() => _errorMessage = e.message);
-    } catch (e) {
-      setState(() => _errorMessage = 'Error inesperado. Intenta de nuevo.');
+      await auth.login(_emailController.text.trim(), _passwordController.text);
+      if (!mounted) {
+        return;
+      }
+      context.go(auth.isStudent
+          ? RouteNames.studentDashboardPath
+          : RouteNames.adminDashboardPath);
+    } on ApiException catch (error) {
+      if (mounted) {
+        setState(() => _errorMessage = error.message);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() =>
+            _errorMessage = 'No pudimos iniciar sesión. Inténtalo nuevamente.');
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.restaurant_menu_rounded,
-                    size: 72,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text('MealTrack', style: textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                  )),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Control de pensiones alimenticias',
-                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 48),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Correo electrónico',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Ingresa tu correo';
-                      if (!v.contains('@')) return 'Correo inválido';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _submit(),
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña',
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                    ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Ingresa tu contraseña';
-                      if (v.length < 6) return 'Mínimo 6 caracteres';
-                      return null;
-                    },
-                  ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: colorScheme.onErrorContainer, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: textTheme.bodySmall?.copyWith(color: colorScheme.onErrorContainer),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [scheme.primary, scheme.secondary, const Color(0xFF7C2D12)],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: AutofillGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AnimatedReveal(child: _BrandHeader(textTheme: text)),
+                      const SizedBox(height: 32),
+                      AnimatedReveal(
+                        delay: const Duration(milliseconds: 80),
+                        child: Card(
+                          color: scheme.surface,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text('Bienvenido',
+                                      style: text.headlineMedium),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                      'Ingresa para consultar y gestionar tus consumos.',
+                                      style: text.bodyMedium?.copyWith(
+                                          color: scheme.onSurfaceVariant)),
+                                  const SizedBox(height: 28),
+                                  TextFormField(
+                                    controller: _emailController,
+                                    autofillHints: const [
+                                      AutofillHints.username,
+                                      AutofillHints.email
+                                    ],
+                                    keyboardType: TextInputType.emailAddress,
+                                    textInputAction: TextInputAction.next,
+                                    decoration: const InputDecoration(
+                                        labelText: 'Correo electrónico',
+                                        hintText: 'nombre@correo.com',
+                                        prefixIcon: Icon(
+                                            Icons.alternate_email_rounded)),
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return 'Ingresa tu correo electrónico';
+                                      }
+                                      if (!value.contains('@')) {
+                                        return 'Ingresa un correo válido';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    autofillHints: const [
+                                      AutofillHints.password
+                                    ],
+                                    obscureText: _obscurePassword,
+                                    textInputAction: TextInputAction.done,
+                                    onFieldSubmitted: (_) => _submit(),
+                                    decoration: InputDecoration(
+                                      labelText: 'Contraseña',
+                                      prefixIcon: const Icon(
+                                          Icons.lock_outline_rounded),
+                                      suffixIcon: IconButton(
+                                        tooltip: _obscurePassword
+                                            ? 'Mostrar contraseña'
+                                            : 'Ocultar contraseña',
+                                        icon: Icon(_obscurePassword
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined),
+                                        onPressed: () => setState(() =>
+                                            _obscurePassword =
+                                                !_obscurePassword),
+                                      ),
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Ingresa tu contraseña';
+                                      }
+                                      if (value.length < 6) {
+                                        return 'La contraseña debe tener al menos 6 caracteres';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  if (_errorMessage != null) ...[
+                                    const SizedBox(height: 16),
+                                    Semantics(
+                                      liveRegion: true,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(
+                                            color: scheme.errorContainer,
+                                            borderRadius:
+                                                BorderRadius.circular(14)),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Icon(Icons.info_outline_rounded,
+                                                color: scheme.onErrorContainer),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                                child: Text(_errorMessage!,
+                                                    style: text.bodySmall?.copyWith(
+                                                        color: scheme
+                                                            .onErrorContainer))),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 24),
+                                  Consumer<AuthProvider>(
+                                    builder: (context, auth, _) {
+                                      final loading = auth.status ==
+                                          AuthStatus.authenticating;
+                                      return FilledButton(
+                                        onPressed: loading ? null : _submit,
+                                        child: AnimatedSwitcher(
+                                          duration:
+                                              const Duration(milliseconds: 180),
+                                          child: loading
+                                              ? const SizedBox(
+                                                  key: ValueKey('loading'),
+                                                  width: 22,
+                                                  height: 22,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.white))
+                                              : const Row(
+                                                  key: ValueKey('submit'),
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                      Icon(Icons.login_rounded),
+                                                      SizedBox(width: 10),
+                                                      Text('Iniciar sesión')
+                                                    ]),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  Consumer<AuthProvider>(
-                    builder: (context, auth, _) {
-                      return SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: FilledButton(
-                          onPressed: auth.status == AuthStatus.authenticating ? null : _submit,
-                          child: auth.status == AuthStatus.authenticating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : const Text('Iniciar sesión', style: TextStyle(fontSize: 16)),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(height: 18),
+                      AnimatedReveal(
+                        delay: const Duration(milliseconds: 140),
+                        child: Text(
+                            'Tu información está protegida y disponible cuando la necesites.',
+                            textAlign: TextAlign.center,
+                            style: text.bodySmall?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.84))),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BrandHeader extends StatelessWidget {
+  final TextTheme textTheme;
+
+  const _BrandHeader({required this.textTheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Semantics(
+          label: 'MealTrack',
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 22,
+                      offset: Offset(0, 10))
+                ]),
+            child: Icon(Icons.restaurant_menu_rounded,
+                color: Theme.of(context).colorScheme.primary, size: 38),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('MealTrack',
+            style: textTheme.displaySmall?.copyWith(color: Colors.white)),
+        const SizedBox(height: 6),
+        Text('Tu pensión, siempre bajo control.',
+            textAlign: TextAlign.center,
+            style: textTheme.bodyLarge
+                ?.copyWith(color: Colors.white.withValues(alpha: 0.88))),
+      ],
     );
   }
 }
