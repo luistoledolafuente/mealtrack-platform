@@ -1,5 +1,6 @@
 ﻿import type { Request, Response, NextFunction } from 'express';
 import * as service from './subscriptions.service.js';
+import * as auditService from '../audit/audit.service.js';
 import { resolveTargetRestaurantId, sendSuccess, sendCreated } from '../../shared/index.js';
 
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -34,6 +35,18 @@ export async function create(req: Request, res: Response, next: NextFunction): P
   try {
     const restaurantId = resolveTargetRestaurantId(req, req.body.restaurantId);
     const subscription = await service.create(req.body, req.user!.id, restaurantId);
+    await auditService.create({
+      userId: req.user!.id,
+      action: 'CREATE',
+      entity: 'Subscription',
+      entityId: subscription.id,
+      detail: {
+        restaurantId,
+        studentUserId: subscription.studentId,
+        mealPlanId: subscription.mealPlanId,
+        operatorRole: req.user!.role,
+      },
+    });
     sendCreated(res, subscription, 'Suscripción creada correctamente');
   } catch (err) {
     next(err);
