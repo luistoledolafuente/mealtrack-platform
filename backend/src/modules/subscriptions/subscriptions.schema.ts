@@ -1,6 +1,7 @@
 ﻿import { z } from 'zod';
 
 export const createSubscriptionSchema = z.object({
+  restaurantId: z.string().uuid('ID de restaurante inválido').optional(),
   studentUserId: z.string().uuid(),
   mealPlanId: z.string().uuid(),
   startDate: z.string().refine((v) => !isNaN(Date.parse(v)), 'Fecha inválida'),

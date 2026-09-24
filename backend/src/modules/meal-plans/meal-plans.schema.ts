@@ -1,6 +1,7 @@
 ﻿import { z } from 'zod';
 
 export const createMealPlanSchema = z.object({
+  restaurantId: z.string().uuid('ID de restaurante inválido').optional(),
   name: z.string().min(1).max(200),
   price: z.number().positive(),
   durationDays: z.number().int().positive(),

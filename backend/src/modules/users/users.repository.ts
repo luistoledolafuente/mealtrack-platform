@@ -21,6 +21,24 @@ export async function findByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
 }
 
+export async function findByRestaurant(restaurantId: string) {
+  return prisma.user.findMany({
+    where: { restaurantId },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phone: true,
+      role: true,
+      restaurantId: true,
+      isActive: true,
+      mustChangePassword: true,
+      createdAt: true,
+    },
+    orderBy: { fullName: 'asc' },
+  });
+}
+
 export async function create(data: {
   fullName: string;
   email: string;

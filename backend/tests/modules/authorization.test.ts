@@ -301,14 +301,24 @@ describe('Authorization - Meal Plans', () => {
     expect(res.status).toBe(404);
   });
 
-  it('superadmin no puede seleccionar un tenant con x-tenant-id', async () => {
+  it('superadmin no puede seleccionar un tenant con x-tenant-id y debe indicar el restaurante en el contrato', async () => {
     const res = await request(app)
       .get('/api/v1/meal-plans')
       .set('Authorization', `Bearer ${SUPERADMIN_TOKEN}`)
       .set('x-tenant-id', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual([]);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('RESTAURANT_REQUIRED');
     expect(prisma.mealPlan.findMany).not.toHaveBeenCalled();
+  });
+
+  it('superadmin consulta planes de un restaurante solo con restaurantId explícito', async () => {
+    (prisma.mealPlan.findMany as any).mockResolvedValue([mockMealPlan]);
+    const restaurantId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    const res = await request(app)
+      .get(`/api/v1/meal-plans?restaurantId=${restaurantId}`)
+      .set('Authorization', `Bearer ${SUPERADMIN_TOKEN}`);
+    expect(res.status).toBe(200);
+    expect(prisma.mealPlan.findMany).toHaveBeenCalledWith({ where: { restaurantId }, orderBy: { name: 'asc' } });
   });
 });
 

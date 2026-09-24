@@ -1,6 +1,16 @@
 ﻿import type { Request, Response, NextFunction } from 'express';
 import * as service from './users.service.js';
-import { sendSuccess, sendCreated } from '../../shared/index.js';
+import { resolveTargetRestaurantId, sendSuccess, sendCreated } from '../../shared/index.js';
+
+export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const restaurantId = resolveTargetRestaurantId(req, req.query.restaurantId);
+    const users = await service.listByRestaurant(restaurantId);
+    sendSuccess(res, users);
+  } catch (err) {
+    next(err);
+  }
+}
 
 export async function getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

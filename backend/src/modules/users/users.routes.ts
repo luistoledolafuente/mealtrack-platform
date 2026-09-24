@@ -6,6 +6,7 @@ import * as controller from './users.controller.js';
 
 const router = Router();
 
+router.get('/', authenticate, authorize(ROLES.ADMIN, ROLES.SUPERADMIN), controller.list);
 router.get('/me', authenticate, controller.getProfile);
 router.patch('/me', authenticate, validate(updateProfileSchema), controller.updateProfile);
 router.patch('/me/password', authenticate, validate(changePasswordSchema), controller.changePassword);

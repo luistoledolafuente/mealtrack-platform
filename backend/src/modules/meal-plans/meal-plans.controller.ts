@@ -1,13 +1,10 @@
 ﻿import type { Request, Response, NextFunction } from 'express';
 import * as service from './meal-plans.service.js';
-import { sendSuccess, sendCreated } from '../../shared/index.js';
+import { resolveTargetRestaurantId, sendSuccess, sendCreated } from '../../shared/index.js';
 
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const restaurantId = req.tenantId || req.user!.restaurantId;
-    if (!restaurantId) {
-      return sendSuccess(res, []);
-    }
+    const restaurantId = resolveTargetRestaurantId(req, req.query.restaurantId);
     const plans = await service.list(restaurantId);
     sendSuccess(res, plans);
   } catch (err) {
@@ -26,10 +23,7 @@ export async function getById(req: Request, res: Response, next: NextFunction): 
 
 export async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const restaurantId = req.tenantId || req.user!.restaurantId;
-    if (!restaurantId) {
-      throw new Error('Restaurant context required');
-    }
+    const restaurantId = resolveTargetRestaurantId(req, req.body.restaurantId);
     const plan = await service.create({ ...req.body, restaurantId });
     sendCreated(res, plan, 'Plan de comida creado correctamente');
   } catch (err) {

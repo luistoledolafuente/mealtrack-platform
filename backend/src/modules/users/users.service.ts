@@ -26,6 +26,10 @@ export async function updateProfile(userId: string, data: { fullName?: string })
   return repository.update(userId, data);
 }
 
+export async function listByRestaurant(restaurantId: string) {
+  return repository.findByRestaurant(restaurantId);
+}
+
 export async function create(
   data: {
     fullName: string;

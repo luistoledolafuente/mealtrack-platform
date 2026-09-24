@@ -1,10 +1,11 @@
 ﻿import type { Request, Response, NextFunction } from 'express';
 import * as service from './subscriptions.service.js';
-import { sendSuccess, sendCreated } from '../../shared/index.js';
+import { resolveTargetRestaurantId, sendSuccess, sendCreated } from '../../shared/index.js';
 
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const subscriptions = await service.list(req.user!.id, req.user!.role, req.tenantId);
+    const restaurantId = resolveTargetRestaurantId(req, req.query.restaurantId);
+    const subscriptions = await service.list(req.user!.id, req.user!.role, restaurantId);
     sendSuccess(res, subscriptions);
   } catch (err) {
     next(err);
@@ -31,7 +32,8 @@ export async function getMySummary(req: Request, res: Response, next: NextFuncti
 
 export async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const subscription = await service.create(req.body, req.user!.id, req.tenantId);
+    const restaurantId = resolveTargetRestaurantId(req, req.body.restaurantId);
+    const subscription = await service.create(req.body, req.user!.id, restaurantId);
     sendCreated(res, subscription, 'Suscripción creada correctamente');
   } catch (err) {
     next(err);
